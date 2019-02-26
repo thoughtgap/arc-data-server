@@ -10,6 +10,9 @@ The json-exports are accessed and staged through multiple layers:
 
 The intention is to provide a base for further analysis of the data.
 
+## Endpoints
+* [`/layer2/files`](http://localhost:3000/layer2/files) Lists all files on Layer 2
+
 ## Commands
 ### Installation
 `npm install`
