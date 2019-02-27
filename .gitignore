@@ -125,3 +125,5 @@ typings/
 lib/*.js
 test/*.js
 *.map
+
+src/playground/

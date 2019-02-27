@@ -1,8 +1,13 @@
 import * as express from 'express'
 import * as arcjson from './arcjson'
 
-const arcLayer1Dir: string = "/Users/more/Library/Mobile\ Documents/iCloud\~com\~bigpaua\~LearnerCoacher/Documents/Export/JSON";
-const arcLayer2Dir: string = "arc-data/2-raw";
+// Directory Path config
+const arcLayer1Path: string = "/Users/more/Library/Mobile\ Documents/iCloud\~com\~bigpaua\~LearnerCoacher/Documents/Export/JSON";
+const arcLayer2Path: string = "arc-data/2-raw";
+
+const arcLayer1Dir = new arcjson.Layer1Directory(arcLayer1Path);
+const arcLayer2Dir = new arcjson.Layer2Directory(arcLayer2Path);
+
 
 class App {
   public express
@@ -46,19 +51,25 @@ class App {
     // List Layer 1 Files
     router.get("/layer1/files", (req, res, next) => {
       console.log("/layer1/files");
-
-      let layer1Dir = new arcjson.Layer1Directory(arcLayer1Dir);
-      layer1Dir.readDirectory();
-      res.json(layer1Dir.getFileList());
+      res.json(arcLayer1Dir.getFilenameList());
     })
 
     // List Layer 2 Files
     router.get("/layer2/files", (req, res, next) => {
       console.log("/layer2/files");
+      res.json(arcLayer2Dir.getFilenameList());
+    })
 
-      let layer2Dir = new arcjson.Layer2Directory(arcLayer2Dir);
-      layer2Dir.readDirectory();
-      res.json(layer2Dir.getFileList());
+    router.get("/layer2/timelinesummary", (req, res, next) => {
+      console.log("/layer2/timelinesummary");
+      res.json(arcLayer2Dir.listTimelineItems());
+    })
+
+    router.get("/locationtypes", (req, res, next) => {
+      console.log("/locationtypes");
+      let test = new arcjson.Places;
+      test.readLocationTypes();
+      res.json(test.locationTypes);
     })
 
     this.express.use('/', router)
