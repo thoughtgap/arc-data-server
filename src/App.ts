@@ -3,11 +3,12 @@ import * as arcjson from './arcjson'
 
 // Directory Path config
 const arcLayer1Path: string = "/Users/more/Library/Mobile\ Documents/iCloud\~com\~bigpaua\~LearnerCoacher/Documents/Export/JSON";
+const arcLayer2loadOnStart = true;
 const arcLayer2Path: string = "arc-data/2-raw";
 
+// Central classes
 const arcLayer1Dir = new arcjson.Layer1Directory(arcLayer1Path);
-const arcLayer2Dir = new arcjson.Layer2Directory(arcLayer2Path);
-
+const arcLayer2Dir = new arcjson.Layer2Directory(arcLayer2Path,arcLayer2loadOnStart);
 
 class App {
   public express

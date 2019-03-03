@@ -14,8 +14,14 @@ export class directory {
     loadedFileContents = false;
 
 
-    constructor(dir: string) {
+    constructor(dir: string, loadOnStart:boolean=false, fileNamePattern: string) {
         this.dirPath = dir;
+        this.fileNamePattern = fileNamePattern;
+        
+        if(loadOnStart) {
+            console.log("Reading files on Startup");
+            this.readFiles();
+        }
     }
     getFilenameList(): string[] {
         if (!this.loadedFilenameList) {
@@ -34,7 +40,7 @@ export class directory {
         this.filenameList = files.filter(file => RegExp(this.fileNamePattern).test(file));
 
         this.loadedFilenameList = true;
-        console.log(`Layer${this.layerNo}Directory/readFilenameList() Found ${this.filenameList.length} files`);
+        console.log(`${this.dirPath}/readFilenameList() Found ${this.filenameList.length} files`);
         return true;
     }
 
@@ -64,9 +70,9 @@ export class directory {
 
 // Layer 1: iCloud Drive Directory
 export class Layer1Directory extends directory {
-    constructor(dir: string) {
-        super(dir);
-        this.fileNamePattern = '^[0-9]{4}-[0-9]{2}-[0-9]{2}\.json(\.gz)?$';
+    constructor(dir: string, loadOnStart:boolean = false) {
+        const fileNamePattern = '^[0-9]{4}-[0-9]{2}-[0-9]{2}\.json(\.gz)?$';
+        super(dir, loadOnStart, fileNamePattern);
     }
 
     // !TODO Link between Layer 1 and 2: extract files into layer2
@@ -74,9 +80,10 @@ export class Layer1Directory extends directory {
 
 // Layer 2: Extracted Files from layer 1
 export class Layer2Directory extends directory {
-    constructor(dir: string) {
-        super(dir);
-        this.fileNamePattern = '^[0-9]{4}-[0-9]{2}-[0-9]{2}\.json$';
+    constructor(dir: string, loadOnStart:boolean = false) {
+        const fileNamePattern = '^[0-9]{4}-[0-9]{2}-[0-9]{2}\.json$';
+
+        super(dir,loadOnStart,fileNamePattern);
     }
 
     listTimelineItems() {
