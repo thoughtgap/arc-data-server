@@ -1,0 +1,9 @@
+{
+    "layer1": {
+        "directory" : "/Users/more/Library/Mobile Documents/iCloud~com~bigpaua~LearnerCoacher/Documents/Export/JSON"
+    },
+    "layer2": {
+        "directory" : "arc-data/jsonexport",
+        "autoLoadOnStart": true
+    }
+}

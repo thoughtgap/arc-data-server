@@ -1,18 +1,20 @@
 import * as express from 'express'
-import * as arcjson from './arcjson'
-
-// Directory Path config
-const arcLayer1Path: string = "/Users/more/Library/Mobile\ Documents/iCloud\~com\~bigpaua\~LearnerCoacher/Documents/Export/JSON";
-const arcLayer2loadOnStart = true;
-const arcLayer2Path: string = "arc-data/2-raw";
+import * as arcFiles from './arcFiles'
+import * as arcClassification from './arcClassification'
+import * as arcAnalysis from './arcAnalysis'
 
 // Central classes
-const arcLayer1Dir = new arcjson.Layer1Directory(arcLayer1Path);
-const arcLayer2Dir = new arcjson.Layer2Directory(arcLayer2Path,arcLayer2loadOnStart);
+const arcDirConfig = new arcFiles.config();
+const arcLayer1Dir = new arcFiles.Layer1Directory(arcDirConfig.getArcLayer1Dir());
+const arcLayer2Dir = new arcFiles.Layer2Directory(arcDirConfig.getArcLayer2Dir(),
+                                                  arcDirConfig.getArcLayer2AutoLoadOnStart());
+
+const arcClassificationPlaces = new arcClassification.Places();
 
 class App {
   public express
   public arcjson
+  public arcFiles
 
   constructor() {
     this.express = express()
@@ -23,25 +25,14 @@ class App {
     const router = express.Router()
 
     // Add headers to make the data available from sites hosted elsewhere
-    // (probably a bad idea?)
     this.express.use(function (req, res, next) {
       console.log("Setting headers");
-
-      // Website you wish to allow to connect
-      res.setHeader('Access-Control-Allow-Origin', '*');
-
-      // Request methods you wish to allow
-      res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE');
-
-      // Request headers you wish to allow
-      res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With,content-type');
-
-      // Set to true if you need the website to include cookies in the requests sent
-      // to the API (e.g. in case you use sessions)
-      res.setHeader('Access-Control-Allow-Credentials', true);
-
-      // Pass to next layer of middleware
-      next();
+      res.setHeader('Access-Control-Allow-Origin', '*'); // Website you wish to allow to connect
+      res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE'); // Request methods you wish to allow
+      res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With,content-type'); // Request headers you wish to allow
+      res.setHeader('Access-Control-Allow-Credentials', true); // Set to true if you need the website to include cookies in the requests
+                                                               // sent to the API (e.g. in case you use sessions)
+      next(); // Pass to next layer of middleware
     });
 
     // Just a placeholder
@@ -50,27 +41,61 @@ class App {
     })
 
     // List Layer 1 Files
-    router.get("/layer1/files", (req, res, next) => {
-      console.log("/layer1/files");
-      res.json(arcLayer1Dir.getFilenameList());
+    router.get("/files/source", (req, res, next) => {
+      console.log("/files/source");
+      let obj = {
+        "description": "A list of all relevant files in the iCloud folder",
+        "response": arcLayer1Dir.getFilenameList()
+      }
+      res.json(obj);
     })
 
     // List Layer 2 Files
-    router.get("/layer2/files", (req, res, next) => {
-      console.log("/layer2/files");
-      res.json(arcLayer2Dir.getFilenameList());
+    router.get("/files/jsonexport", (req, res, next) => {
+      console.log("/files/jsonexport");
+
+      let obj = {
+        "description": "A list of all the Arc json export files.",
+        "response": arcLayer2Dir.getFilenameList()
+      }
+      res.json(obj);
     })
 
-    router.get("/layer2/timelinesummary", (req, res, next) => {
-      console.log("/layer2/timelinesummary");
-      res.json(arcLayer2Dir.listTimelineItems());
+    // router.get("/layer2/timelinesummary", (req, res, next) => {
+    //   console.log("/layer2/timelinesummary");
+    //   res.json(arcLayer2Dir.listTimelineItems());
+    // })
+    
+    router.get("/classifications/places", (req, res, next) => {
+      console.log("/classifications/places");
+      
+      let obj = {
+        "description": "The classified places (by place.name) put into the categories",
+        "response": arcClassificationPlaces.getClassification()
+      }
+      res.json(obj);
+    })
+    
+    
+    router.get("/visits/places/", (req, res, next) => {
+      console.log("/visits/places/");
+
+      let obj = {
+        "description": "A list of all the places that were visited. With duplicates.",
+        "response": arcAnalysis.timelinesAnalysis.listPlaces(arcLayer2Dir.getArcTimelines())
+      }
+      res.json(obj);
     })
 
-    router.get("/locationtypes", (req, res, next) => {
-      console.log("/locationtypes");
-      let test = new arcjson.Places;
-      test.readLocationTypes();
-      res.json(test.locationTypes);
+
+    router.get("/visits/places/unassigned", (req, res, next) => {
+      console.log("/visits/places/unassigned");
+
+      let obj = {
+        "description": "A list of Visits with no assigned place.",
+        "response": arcAnalysis.timelinesAnalysis.visitsWithoutPlace(arcLayer2Dir.getArcTimelines())
+      };
+      res.json(obj);
     })
 
     this.express.use('/', router)

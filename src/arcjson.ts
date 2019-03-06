@@ -1,211 +1,165 @@
+/* Data types and structure for exported Arc Data.
+The types are useful for scripting, but currently not used for typechecking at runtime
+Analysis functionality is added via arcAnalysis module to keep structure + analysis function separated */
+
 import fs = require('fs');
 
-// Super-Class for File directories
-export class directory {
-    layerNo: number
-    dirPath: string
+// An Arc-Timeline (can be any length)
+export class arcTimeline {
+    timelineItems: arcTimelineItem[]
 
-    filenameList: string[]
-    loadedFilenameList = false;
+    constructor(arcTimelineJSON) {
+        //this.timelineItems = arcTimeline.timelineItems;
 
-    fileNamePattern: string
+        // Parse the raw json items to arcTimelineItem
+        this.timelineItems = arcTimelineJSON.timelineItems.map(function (timelineItem) {
+            return new arcTimelineItem(timelineItem);
+        });
+    }
 
-    fileContentList: File[]
-    loadedFileContents = false;
+    // Appends the elements of a second Arc timeline (e.g. different file) to this one
+    public appendTimeline(arcTimeline: arcTimeline) {
+        this.timelineItems.push(...arcTimeline.timelineItems);
+    }
+
+    // Returns only the visits of this timeline
+    // TODO: Outsource to arcAnalysis
+    public onlyVisits() {
+        return this.timelineItems.filter(function (timelineItem) {
+            return timelineItem.isVisit
+        });
+    }
+
+    // Returns only the activities of this timeline
+    // TODO: Outsource to arcAnalysis
+    public onlyActivities() {
+        return this.timelineItems.filter(function (timelineItem) {
+            return !timelineItem.isVisit
+        });
+    }
+
+    // Creates a list with all the places visited in this timeline (can contain dupes)
+    // TODO: Outsource to arcAnalysis
+    public listPlaces(): Array<any> {
+        return this.onlyVisits().map(timelineItem => timelineItem.place.name);
+    }
+}
+
+export class arcTimelineItem {
+    itemId: String
+    nextItemId: String
+    previousItemId: String
+    
+    startDate: Date
+    endDate: Date
+    
+    samples: arcSample[]
+    radius: Number
+    altitude: Number
+    center: Number
+    
+    activityType: String
+    activeEnergyBurned: Number
+    hkStepCount: Number
+    stepCount: Number
+    
+    isVisit: boolean
+    
+    floorsAscended: Number
+    floorsDescended: Number
+    
+    averageHeartRate: Number
+    maxHeartRate: Number
+
+    /* Visit Fields */
+    place:arcPlace
+    streetAddress: string
+    manualPlace: boolean
+    placeId: string
+
+    /* Activity Fields */
+    uncertainActivityType: boolean
+    manualActivityType: boolean
+    activityTypeConfidenceScore: Number
 
 
-    constructor(dir: string, loadOnStart:boolean=false, fileNamePattern: string) {
-        this.dirPath = dir;
-        this.fileNamePattern = fileNamePattern;
+    constructor(arcTimelineItem) {
+        this.itemId = arcTimelineItem.itemId;
+        this.nextItemId = arcTimelineItem.nextItemId;
+        this.previousItemId = arcTimelineItem.previousItemId;
         
-        if(loadOnStart) {
-            console.log("Reading files on Startup");
-            this.readFiles();
+        this.startDate = arcTimelineItem.startDate;
+        this.endDate = arcTimelineItem.endDate;
+        
+        this.samples = arcTimelineItem.samples;
+        this.radius = arcTimelineItem.radius;
+        this.altitude = arcTimelineItem.altitude;
+        this.center = arcTimelineItem.center;
+        
+        this.activityType = arcTimelineItem.activityType;
+        this.activeEnergyBurned = arcTimelineItem.activeEnergyBurned;
+        this.hkStepCount = arcTimelineItem.hkStepCount;
+        this.stepCount = arcTimelineItem.stepCount;
+        
+        this.isVisit = arcTimelineItem.isVisit;
+        
+        this.floorsAscended = arcTimelineItem.floorsAscended;
+        this.floorsDescended = arcTimelineItem.floorsDescended;
+        
+        this.averageHeartRate = arcTimelineItem.averageHeartRate;
+        this.maxHeartRate = arcTimelineItem.maxHeartRate;
+
+        if(this.isVisit) {
+            /* Visit fields */
+            this.place = arcTimelineItem.place;
+            this.streetAddress = arcTimelineItem.streetAddress;
+            this.manualPlace = arcTimelineItem.manualPlace;
+            this.placeId = arcTimelineItem.placeId;
         }
-    }
-    getFilenameList(): string[] {
-        if (!this.loadedFilenameList) {
-            this.readFilenameList();
-        }
-        return this.filenameList;
-    }
-    readFilenameList(): boolean {
-        // Scans the directory with the extracted .json files,
-        // writes the filenames to this.filenameList
-
-        // Read files of directory
-        let files: string[] = fs.readdirSync(this.dirPath);
-
-        // Filter for all files with yyyy-mm-dd.json filename format (others are dupes)
-        this.filenameList = files.filter(file => RegExp(this.fileNamePattern).test(file));
-
-        this.loadedFilenameList = true;
-        console.log(`${this.dirPath}/readFilenameList() Found ${this.filenameList.length} files`);
-        return true;
-    }
-
-    readFiles(): boolean {
-        // Reads the files from disk, writes content into this.fileContentList
-        if (!this.loadedFilenameList) {
-            this.readFilenameList();
+        else {
+            /* Activity Fields */
+            this.uncertainActivityType = arcTimelineItem.uncertainActivityType;
+            this.manualActivityType = arcTimelineItem.manualActivityType;
+            this.activityTypeConfidenceScore = arcTimelineItem.activityTypeConfidenceScore;
         }
 
-        let returnVal: File[] = []; // Temporary Output Variable
-
-        var Progress = require('ts-progress');
-        var progress = Progress.create({ total: this.filenameList.length, pattern: 'Reading files from directory: {bar} {current}/{total} | Remaining: {remaining} | Elapsed: {elapsed} ' });
-
-        this.filenameList.forEach((filename, i_file) => {
-            let file = new File(this.dirPath + "/" + filename, true);
-            returnVal.push(file);
-            progress.update();
-        });
-        progress.done();
-
-        this.loadedFileContents = true;
-        this.fileContentList = returnVal;
-        return true;
     }
 }
 
-// Layer 1: iCloud Drive Directory
-export class Layer1Directory extends directory {
-    constructor(dir: string, loadOnStart:boolean = false) {
-        const fileNamePattern = '^[0-9]{4}-[0-9]{2}-[0-9]{2}\.json(\.gz)?$';
-        super(dir, loadOnStart, fileNamePattern);
+interface arcPlace {
+    placeId: String,
+    radius: {
+        mean: Number
+        sd: Number
     }
-
-    // !TODO Link between Layer 1 and 2: extract files into layer2
-}
-
-// Layer 2: Extracted Files from layer 1
-export class Layer2Directory extends directory {
-    constructor(dir: string, loadOnStart:boolean = false) {
-        const fileNamePattern = '^[0-9]{4}-[0-9]{2}-[0-9]{2}\.json$';
-
-        super(dir,loadOnStart,fileNamePattern);
-    }
-
-    listTimelineItems() {
-        if (!this.loadedFileContents) {
-            this.readFiles();
-        }
-
-        let returnVal = [];
-        this.fileContentList.forEach((filecontent, i_filecontent) => {
-            let jsonday = new JSONDay(filecontent);
-            let fromToSummary = jsonday.fromToSummary();
-
-            // Get only the sentences    from this array of summaries
-            let summaryStrings = fromToSummary.map(function (x) {
-                return x.sentence;
-            });
-
-            returnVal.push({ "day": jsonday.getDate(), "summary": summaryStrings });
-        });
-        return returnVal;
+    isHome: Boolean
+    name: String
+    center: {
+        longitude: Number
+        latitude: Number
     }
 }
 
-// File
-export class File {
-    fileFullPath: string
-    fileContent
-
-    constructor(fileFullPath: string, json: boolean) {
-        this.fileFullPath = fileFullPath;
-
-        //console.log(`Reading ${json ? 'JSON' : ''} file ${this.fileFullPath}`)
-        let content = fs.readFileSync(this.fileFullPath, 'utf8');
-        if (json) {
-            content = JSON.parse(content);
-        }
-        this.fileContent = content;
+interface arcSample {
+    zAcceleration?: Number,
+    recordingState?: "recording",
+    secondsFromGMT?: Number // were only added recently
+    timelineItemId: String,
+    sampleId: String
+    location: {
+        verticalAccuracy: Number
+        speed: Number
+        longitude: Number
+        horizontalAccuracy: Number
+        course: Number
+        latitude: Number
+        timestamp: Date
+        altitude: Number
     }
-}
-
-// For Places classification
-export class Places {
-    locationTypes: object
-
-    readLocationTypes(): boolean {
-        // Read manual assignment of locations to categories like home, work from file
-        let file = new File("config/locationtypes.json", true);
-        this.locationTypes = file.fileContent;
-        return true;
-    }
-}
-
-// A full JSON-exported day with Arc data
-export class JSONDay {
-    file: File
-
-    constructor(file: File) {
-        this.file = file;
-    }
-
-    // Gets the date from this daily Json file
-    getDate(): Date {
-        // Use end date, because startDate might start yesterday 
-        let arcJSONDay = this.file.fileContent;
-        return new Date(arcJSONDay.timelineItems[0].endDate.substring(0, 10));
-    }
-
-    // Creates an Object with summary of all from -> to (via activity types) segments
-    fromToSummary(): Array<any> {
-        let arcJSONDay = this.file.fileContent;
-
-        let summary: Array<any> = [];
-
-        // Doing this wild stuff to avoid Javascript Reference problems. Might come back here.
-        let summaryObjFrom = null;
-        let summaryObjTo = null;
-        let summaryObjHow = [];
-        let summaryObjSentence = "";
-
-        arcJSONDay.timelineItems.forEach((timelineItem, i_timelineItem) => {
-            if (timelineItem.isVisit) {
-                // This is a movement segment. Let's see from where to where
-
-                if (summaryObjFrom === null) {
-                    // First Element, initialize
-                    summaryObjFrom = { timelineItem, i_timelineItem };
-                    summaryObjTo = null;
-                }
-                else {
-                    // Arrived somewhere, 
-                    summaryObjTo = { timelineItem, i_timelineItem };
-
-                    // Fill in array if empty
-                    if (summaryObjHow.length <= 0) {
-                        summaryObjHow.push("??");
-                    }
-
-                    // Create Summary String
-                    summaryObjSentence = `${summaryObjFrom.timelineItem.endDate} - From ${(summaryObjFrom.timelineItem.place ? summaryObjFrom.timelineItem.place.name : '')} (via ${summaryObjHow.join(",")}) to ${(summaryObjTo.timelineItem.place ? summaryObjTo.timelineItem.place.name : '???')}`;
-
-                    // Push to list of summaries
-                    summary.push({
-                        from: summaryObjFrom
-                        , to: summaryObjTo
-                        , how: summaryObjHow
-                        , sentence: summaryObjSentence
-                    });
-
-                    // Reset Variables
-                    summaryObjFrom = summaryObjTo;
-                    summaryObjHow = [];
-                }
-            }
-            else {
-                // This is a transport segment. Fill the Activity type.
-                if (timelineItem.activityType) {
-                    summaryObjHow.push(timelineItem.activityType);
-                }
-            }
-        });
-
-        return summary;
-    }
-
+    stepHz: Number
+    date: Date
+    movingState: String, // "stationary
+    courseVariance: Number
+    xyAcceleration: Number,
+    coreMotionActivityType: String // "walking"
 }
