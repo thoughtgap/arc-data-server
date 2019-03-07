@@ -88,7 +88,7 @@ export class Layer2Directory extends directory {
     parsedArcTimelines: boolean
 
     constructor(dir: string, loadOnStart: boolean = false) {
-        const fileNamePattern = '^[0-9]{4}-[0-9]{2}-[0-9]{2}\.json$';
+        const fileNamePattern = '^[0-9]{4}-[0-9]{2}(-[0-9]{2})?\.json$';
 
         super(dir, loadOnStart, fileNamePattern);
 
