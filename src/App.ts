@@ -112,6 +112,20 @@ class App {
       res.json(obj);
     })
 
+
+    router.get("/timelineItems/timestamps", (req, res, next) => {
+      console.log("/timelineItems/timestamps");
+
+      let filter = req.query; // Fetch the filter from the URL get parameters
+
+      let obj = {
+        "description": "A list of all activity types",
+        "response": arcAnalysis.timelinesAnalysis.listTimestamps(arcLayer2Dir.getArcTimelines(),filter)
+      };
+
+      res.json(obj);
+    })
+
     this.express.use('/', router)
   }
 }

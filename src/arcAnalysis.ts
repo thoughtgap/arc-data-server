@@ -44,6 +44,16 @@ export abstract class timelinesAnalysis {
         })
         return timelinesResults;
     }
+
+    public static listTimestamps(timelines: arcTimeline[], filter): Array<any> {
+        let tlFilter = new timelineFilter(filter); // Handover the filter
+        filter = undefined;
+
+        // For each timeline, execute listPlaces and then flatten the result
+        let timelinesResults = timelines.map(timeline => timelineAnalysis.listTimestamps(timeline, tlFilter));
+        timelinesResults = flattenArray(timelinesResults);
+        return timelinesResults;
+    }
 }
 
 function flattenArray(nestedArr) {
@@ -99,8 +109,20 @@ export abstract class timelineAnalysis {
     public static listActivityTypes(timeline: arcTimeline, timelineFilter: timelineFilter): Array<any> {
 
         return this.itemFilter(timeline, timelineFilter)
-            .filter(timelineItem => timelineItem.activityType) // Only the visits with assigned places
+            .filter(timelineItem => timelineItem.activityType) // Only the visits with assigned activity types
             .map(timelineItem => timelineItem.activityType);   // only return the name
+    }
+
+    // List all timeline items (e.g. for heatmap display)
+    public static listTimestamps(timeline: arcTimeline, timelineFilter: timelineFilter): Array<any> {
+
+        return this.itemFilter(timeline, timelineFilter)
+            .map(timelineItem => {                             // Return only some fields
+                return {
+                    timestamp: timelineItem.startDate.getTime()/1000,
+                    keyfigure: (timelineItem.endDate.getTime() - timelineItem.startDate.getTime())/1000
+                }
+            });
     }
 
     static itemFilter(timeline: arcTimeline, tlFilter: timelineFilter = null): Array<any> {
