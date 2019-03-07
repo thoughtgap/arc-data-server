@@ -7,14 +7,12 @@ import * as arcAnalysis from './arcAnalysis'
 const arcDirConfig = new arcFiles.config();
 const arcLayer1Dir = new arcFiles.Layer1Directory(arcDirConfig.getArcLayer1Dir());
 const arcLayer2Dir = new arcFiles.Layer2Directory(arcDirConfig.getArcLayer2Dir(),
-                                                  arcDirConfig.getArcLayer2AutoLoadOnStart());
+  arcDirConfig.getArcLayer2AutoLoadOnStart());
 
 const arcClassificationPlaces = new arcClassification.Places();
 
 class App {
   public express
-  public arcjson
-  public arcFiles
 
   constructor() {
     this.express = express()
@@ -31,7 +29,7 @@ class App {
       res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE'); // Request methods you wish to allow
       res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With,content-type'); // Request headers you wish to allow
       res.setHeader('Access-Control-Allow-Credentials', true); // Set to true if you need the website to include cookies in the requests
-                                                               // sent to the API (e.g. in case you use sessions)
+      // sent to the API (e.g. in case you use sessions)
       next(); // Pass to next layer of middleware
     });
 
@@ -65,24 +63,26 @@ class App {
     //   console.log("/layer2/timelinesummary");
     //   res.json(arcLayer2Dir.listTimelineItems());
     // })
-    
+
     router.get("/classifications/places", (req, res, next) => {
       console.log("/classifications/places");
-      
+
       let obj = {
         "description": "The classified places (by place.name) put into the categories",
         "response": arcClassificationPlaces.getClassification()
       }
       res.json(obj);
     })
-    
-    
+
+
     router.get("/visits/places/", (req, res, next) => {
       console.log("/visits/places/");
 
+      let filter = req.query; // Fetch the filter from the URL get parameters
+
       let obj = {
-        "description": "A list of all the places that were visited. With duplicates.",
-        "response": arcAnalysis.timelinesAnalysis.listPlaces(arcLayer2Dir.getArcTimelines())
+        "description": "A list of all the places that were visited.",
+        "response": arcAnalysis.timelinesAnalysis.listPlaces(arcLayer2Dir.getArcTimelines(),filter)
       }
       res.json(obj);
     })
@@ -91,9 +91,23 @@ class App {
     router.get("/visits/places/unassigned", (req, res, next) => {
       console.log("/visits/places/unassigned");
 
+      let filter = req.query; // Fetch the filter from the URL get parameters
+
       let obj = {
         "description": "A list of Visits with no assigned place.",
-        "response": arcAnalysis.timelinesAnalysis.visitsWithoutPlace(arcLayer2Dir.getArcTimelines())
+        "response": arcAnalysis.timelinesAnalysis.visitsWithoutPlace(arcLayer2Dir.getArcTimelines(),filter)
+      };
+      res.json(obj);
+    })
+
+    router.get("/activities/types", (req, res, next) => {
+      console.log("/activities/types");
+
+      let filter = req.query; // Fetch the filter from the URL get parameters
+
+      let obj = {
+        "description": "A list of all activity types",
+        "response": arcAnalysis.timelinesAnalysis.listActivityTypes(arcLayer2Dir.getArcTimelines(),filter)
       };
       res.json(obj);
     })

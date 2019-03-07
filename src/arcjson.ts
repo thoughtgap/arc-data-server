@@ -44,6 +44,7 @@ export class arcTimeline {
         return this.onlyVisits().map(timelineItem => timelineItem.place.name);
     }
 }
+}
 
 export class arcTimelineItem {
     itemId: String
@@ -88,8 +89,8 @@ export class arcTimelineItem {
         this.nextItemId = arcTimelineItem.nextItemId;
         this.previousItemId = arcTimelineItem.previousItemId;
         
-        this.startDate = arcTimelineItem.startDate;
-        this.endDate = arcTimelineItem.endDate;
+        this.startDate = new Date(arcTimelineItem.startDate);
+        this.endDate = new Date(arcTimelineItem.endDate);
         
         this.samples = arcTimelineItem.samples;
         this.radius = arcTimelineItem.radius;
