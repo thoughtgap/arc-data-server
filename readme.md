@@ -30,9 +30,13 @@ The intention is to provide a base for further analysis of the data.
 You can optionally filter the queried timelineitems with the following URL-Parameters::
 
 `?type=visits` Shows only visits. Use `?type=activities` for activities
+
 `&from=2019-03-01` From-Date
+
 `&to=2019-03-15` To-Date
+
 `&activityType=cycling,boat` A (comma-separated) list of activity types
+
 `&weekday=Mo,Fr` A (comma-separated) list of weekdays (first two letters)
 
 
