@@ -12,6 +12,8 @@ The intention is to provide a base for further analysis of the data.
 
 ## Configuration
 * `config/directories.json` The paths to the directories are specified here.
+  * `layer1`: iCloud directory where Arc stores its daily json.gz outputs
+  * `layer2`: Local directory (defaults to `arc-data/jsonexport`), containing uncompress json files
 * `config/locationtypes.json` This file is used for determining workplaces and home locations (in order to analyse commutes). It references Arc places by the `place.name` attribute.
 
 ## Endpoints
@@ -31,3 +33,9 @@ Then cd to this directory and install via
 
 ### Run in Devmode
 `npm run dev`
+
+## Notes
+
+1. The current version of arc-data-server reads uncompressed Arc json-files from a local directory (`layer2` in `config/directories.json`). To get started, extract the Arc json.gz files to that location.
+2. arc-data-server does not currently monitor changes to the input files, to reload, restart the server.
+
