@@ -21,29 +21,6 @@ export class arcTimeline {
     public appendTimeline(arcTimeline: arcTimeline) {
         this.timelineItems.push(...arcTimeline.timelineItems);
     }
-
-    // Returns only the visits of this timeline
-    // TODO: Outsource to arcAnalysis
-    public onlyVisits() {
-        return this.timelineItems.filter(function (timelineItem) {
-            return timelineItem.isVisit
-        });
-    }
-
-    // Returns only the activities of this timeline
-    // TODO: Outsource to arcAnalysis
-    public onlyActivities() {
-        return this.timelineItems.filter(function (timelineItem) {
-            return !timelineItem.isVisit
-        });
-    }
-
-    // Creates a list with all the places visited in this timeline (can contain dupes)
-    // TODO: Outsource to arcAnalysis
-    public listPlaces(): Array<any> {
-        return this.onlyVisits().map(timelineItem => timelineItem.place.name);
-    }
-}
 }
 
 export class arcTimelineItem {
