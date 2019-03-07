@@ -27,7 +27,7 @@ The intention is to provide a base for further analysis of the data.
 * [`/activities/types`](http://localhost:3000/activities/types/unassigned) Shows a list of all activity types. Can be filtered.
 
 ### Filtering
-You can optionally filter the queried timelineitems with the following URL-Parameters::
+You can optionally filter the queried timelineitems with the following URL-Parameters:
 
 * `?type=visits` Shows only visits. Use `?type=activities` for activities
 * `&from=2019-03-01` From-Date
