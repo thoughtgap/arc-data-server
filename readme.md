@@ -14,7 +14,7 @@ The intention is to provide a base for further analysis of the data.
 
 * `config/directories.json` The paths to the directories are specified here.
   * `layer1`: iCloud directory where Arc stores its daily json.gz outputs
-  * `layer2`: Local directory (defaults to `arc-data/jsonexport`), containing uncompress json files
+  * `layer2`: Local directory (defaults to `arc-data/jsonexport`), containing uncompressed json files
 * `config/locationtypes.json` This file is used for determining workplaces and home locations (in order to analyse commutes). It references Arc places by the `place.name` attribute.
 
 ## Endpoints
