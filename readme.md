@@ -5,7 +5,7 @@ An http interface for exported json-files from [BigPaua's Arc App](https://www.b
 The json-exports are accessed and staged through multiple layers:
 
 1. iCloud Directory (if available) with compressed export files (--> Not implemented yet!)
-1. Extracted json files for direct read
+1. Extracted json files for direct read (accepts only `yyyy-mm-dd.json` and `yyyy-mm.json`)
 1. Enriched Data (details to follow)
 
 The intention is to provide a base for further analysis of the data.
