@@ -126,6 +126,19 @@ class App {
       res.json(obj);
     })
 
+    router.get("/timelineItems/list", (req, res, next) => {
+      console.log("URL: "+req.url);
+
+      let filter = req.query; // Fetch the filter from the URL get parameters
+      console.log(`Using filter: `+JSON.stringify(filter))
+    
+      let obj = {
+        "description": "A list of timelineItems (filtered)",
+        "response": arcAnalysis.timelinesAnalysis.listTimelineItems(arcLayer2Dir.getArcTimelines(),filter)
+      };
+
+      res.json(obj);
+    })
     this.express.use('/', router)
   }
 }
