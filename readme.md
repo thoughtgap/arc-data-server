@@ -25,7 +25,6 @@ The intention is to provide a base for further analysis of the data.
 * [`/visits/places/`](http://localhost:3000/visits/places) Shows a list of all the places that were visited. Can be filtered.
 * [`/visits/places/unassigned`](http://localhost:3000/visits/places/unassigned) Shows a list of visits that don't have an assigned place. Can be filtered.
 * [`/activities/types`](http://localhost:3000/activities/types) Shows a list of all activity types. Can be filtered.
-* [`/activities/types`](http://localhost:3000/activities/types) Shows a list of all activity types. Can be filtered.
 * [`/timelineItems/list`](http://localhost:3000/timelineItems/list) Shows a (human-readable) list of timelineItems. Can be filtered.
 * [`/timelineItems/timestamps`](http://localhost:3000/timelineItems/timestamps) Shows a list of timestamps. Can be filtered.
 
