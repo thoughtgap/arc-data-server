@@ -54,6 +54,16 @@ export abstract class timelinesAnalysis {
         timelinesResults = flattenArray(timelinesResults);
         return timelinesResults;
     }
+
+    public static listTimelineItems(timelines: arcTimeline[], filter): Array<any> {
+        let tlFilter = new timelineFilter(filter); // Handover the filter
+        filter = undefined;
+
+        // For each timeline, execute listPlaces and then flatten the result
+        let timelinesResults = timelines.map(timeline => timelineAnalysis.listTimelineItems(timeline, tlFilter));
+        timelinesResults = flattenArray(timelinesResults);
+        return timelinesResults;
+    }
 }
 
 function flattenArray(nestedArr) {
@@ -69,6 +79,25 @@ function flattenArray(nestedArr) {
     */
     return [].concat(...nestedArr);
 }
+
+function displayTime(millisec: number) {
+    const normalizeTime = (time: string): string => (time.length === 1) ? time.padStart(2, '0') : time;
+   
+    let seconds: string = (millisec / 1000).toFixed(0);
+    let minutes: string = Math.floor(parseInt(seconds) / 60).toString();
+    let hours: string = '';
+   
+    if (parseInt(minutes) > 59) {
+      hours = normalizeTime(Math.floor(parseInt(minutes) / 60).toString());
+      minutes = normalizeTime((parseInt(minutes) - (parseInt(hours) * 60)).toString());
+    }
+    seconds = normalizeTime(Math.floor(parseInt(seconds) % 60).toString());
+   
+    if (hours !== '') {
+       return `${hours}:${minutes}:${seconds}`;
+    }
+      return `${minutes}:${seconds}`;
+   }
 
 // Analysis functions for one arcTimeline
 export abstract class timelineAnalysis {
@@ -124,6 +153,21 @@ export abstract class timelineAnalysis {
                 }
             });
     }
+
+    // List all timeline items (human readable)
+    public static listTimelineItems(timeline: arcTimeline, timelineFilter: timelineFilter): Array<any> {
+
+        return this.itemFilter(timeline, timelineFilter)
+            .map(timelineItem => {                             // Return only some fields
+                return {
+                    startDate: timelineItem.startDate,
+                    endDate: timelineItem.endDate,
+                    duration: displayTime(((new Date()).setTime(timelineItem.endDate.getTime() - timelineItem.startDate.getTime()))),
+                    streetAddress: timelineItem.streetAddress,
+                }
+            });
+    }
+
 
     static itemFilter(timeline: arcTimeline, tlFilter: timelineFilter = null): Array<any> {
         // Filter-Object
