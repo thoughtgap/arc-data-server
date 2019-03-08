@@ -36,6 +36,10 @@ export class directory {
         // Scans the directory with the extracted .json files,
         // writes the filenames to this.filenameList
 
+        if (!fs.existsSync(this.dirPath)) {
+            console.log(`Directory ${this.dirPath} not found`);
+            return false;
+        }
         // Read files of directory
         let files: string[] = fs.readdirSync(this.dirPath);
 
