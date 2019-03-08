@@ -22,8 +22,18 @@ The intention is to provide a base for further analysis of the data.
 * [`/files/source`](http://localhost:3000/files/source) Lists the compressed source files (Layer 1, not really implemented yet)
 * [`/files/jsonexport`](http://localhost:3000/files/jsonexport) Lists all the Arc export files (Layer 2)
 * [`/classifications/places`](http://localhost:3000/classifications/places) Shows the place classifications maintained in `config/locationtypes.json`
-* [`/visits/places/`](http://localhost:3000/visits/places) Shows a list of all the places that were visited (might contain duplicates, it's just a dumb list)
-* [`/visits/places/unassigned`](http://localhost:3000/visits/places/unassigned) Shows a list of visits that don't have an assigned place.
+* [`/visits/places/`](http://localhost:3000/visits/places) Shows a list of all the places that were visited. Can be filtered.
+* [`/visits/places/unassigned`](http://localhost:3000/visits/places/unassigned) Shows a list of visits that don't have an assigned place. Can be filtered.
+* [`/activities/types`](http://localhost:3000/activities/types/unassigned) Shows a list of all activity types. Can be filtered.
+
+### Filtering
+You can optionally filter the queried timelineitems with the following URL-Parameters:
+
+* `?type=visits` Shows only visits. Use `?type=activities` for activities
+* `&from=2019-03-01` From-Date
+* `&to=2019-03-15` To-Date
+* `&activityType=cycling,boat` A (comma-separated) list of activity types
+* `&weekday=Mo,Fr` A (comma-separated) list of weekdays (first two letters)
 
 ## Commands
 
