@@ -80,7 +80,7 @@ function flattenArray(nestedArr) {
     return [].concat(...nestedArr);
 }
 
-function displayTime(millisec: number) {
+function displayDuration(millisec: number) {
     const normalizeTime = (time: string): string => (time.length === 1) ? time.padStart(2, '0') : time;
    
     let seconds: string = (millisec / 1000).toFixed(0);
@@ -162,7 +162,7 @@ export abstract class timelineAnalysis {
                 return {
                     startDate: timelineItem.startDate,
                     endDate: timelineItem.endDate,
-                    duration: displayTime(((new Date()).setTime(timelineItem.endDate.getTime() - timelineItem.startDate.getTime()))),
+                    duration: displayDuration(timelineItem.endDate - timelineItem.startDate),
                     streetAddress: timelineItem.streetAddress,
                 }
             });
