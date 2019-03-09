@@ -100,7 +100,11 @@ export class arcTimelineItem {
             this.manualActivityType = arcTimelineItem.manualActivityType;
             this.activityTypeConfidenceScore = arcTimelineItem.activityTypeConfidenceScore;
         }
+    }
 
+    // Return duration in minutes
+    public getDurationMinutes(): number {
+        return (this.endDate.getTime() - this.startDate.getTime())/1000/60;
     }
 }
 

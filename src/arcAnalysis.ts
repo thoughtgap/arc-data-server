@@ -82,29 +82,29 @@ function flattenArray(nestedArr) {
 
 function displayDuration(millisec: number) {
     const normalizeTime = (time: string): string => (time.length === 1) ? time.padStart(2, '0') : time;
-   
+
     let seconds: string = (millisec / 1000).toFixed(0);
     let minutes: string = Math.floor(parseInt(seconds) / 60).toString();
     let hours: string = '';
-   
+
     if (parseInt(minutes) > 59) {
-      hours = normalizeTime(Math.floor(parseInt(minutes) / 60).toString());
-      minutes = normalizeTime((parseInt(minutes) - (parseInt(hours) * 60)).toString());
+        hours = normalizeTime(Math.floor(parseInt(minutes) / 60).toString());
+        minutes = normalizeTime((parseInt(minutes) - (parseInt(hours) * 60)).toString());
     }
     seconds = normalizeTime(Math.floor(parseInt(seconds) % 60).toString());
-   
+
     if (hours !== '') {
-       return `${hours}:${minutes}:${seconds}`;
+        return `${hours}:${minutes}:${seconds}`;
     }
-      return `${minutes}:${seconds}`;
-   }
+    return `${minutes}:${seconds}`;
+}
 
 // Analysis functions for one arcTimeline
 export abstract class timelineAnalysis {
-    
+
     // Creates a list with all the places visited in this timeline
     public static listPlaces(timeline: arcTimeline, tlFilter: timelineFilter): Array<any> {
-        
+
         // Override the type filter if this had been set. Nothing else makes sense
         tlFilter.filterObj.type = ["visits"];
 
@@ -148,8 +148,8 @@ export abstract class timelineAnalysis {
         return this.itemFilter(timeline, timelineFilter)
             .map(timelineItem => {                             // Return only some fields
                 return {
-                    timestamp: timelineItem.startDate.getTime()/1000,
-                    keyfigure: (timelineItem.endDate.getTime() - timelineItem.startDate.getTime())/1000
+                    timestamp: timelineItem.startDate.getTime() / 1000,
+                    keyfigure: (timelineItem.endDate.getTime() - timelineItem.startDate.getTime()) / 1000
                 }
             });
     }
@@ -202,12 +202,12 @@ export abstract class timelineAnalysis {
 
             // Date Interval Filter
             if (filter.from) {
-                if (filter.from > timelineItem.startDate || filter.from > timelineItem.startDate) {
+                if (filter.from > timelineItem.startDate && filter.from > timelineItem.endDate) {
                     return false;
                 }
             }
             if (filter.to) {
-                if (filter.to < timelineItem.startDate || filter.to < timelineItem.startDate) {
+                if (filter.to < timelineItem.startDate && filter.to < timelineItem.endDate) {
                     return false;
                 }
             }
@@ -217,6 +217,14 @@ export abstract class timelineAnalysis {
                 if (!filter.activityType.includes(timelineItem.activityType)) {
                     return false;
                 }
+            }
+
+            // Duration Filter
+            if(filter.duration.from && filter.duration.from > timelineItem.getDurationMinutes()) {
+                return false;
+            }
+            if(filter.duration.to && filter.duration.to < timelineItem.getDurationMinutes()) {
+                return false;
             }
 
             return true;
@@ -236,6 +244,10 @@ interface filterObj {
     from?: Date,
     to?: Date,
     activityType?: String[] // TODO: Restrict to Arc Activity types?
+    duration?: {
+        from?: Number,
+        to?: Number
+    }
 }
 
 class timelineFilter {
@@ -303,6 +315,7 @@ class timelineFilter {
             // TODO: Error handling
         }
 
+        // Activity Type Filter
         filterObj.activityType = [];
         if (filter.activityType !== undefined) {
             // Check if input value is already an array, in this case just hand over
@@ -312,6 +325,23 @@ class timelineFilter {
             // Or a comma-separated String...
             else if (typeof filter.activityType == "string") {
                 filterObj.activityType = filter.activityType.split(",");
+            }
+        }
+
+        // Duration Filter &duration_from=60 &duration_to=120
+        filterObj.duration = {from: null, to: null};
+        if (filter.duration_from !== undefined) {
+            // Expect a number in minutes
+            let duration_from = parseInt(filter.duration_from);
+            if(duration_from != 0) {
+                filterObj.duration.from = duration_from;
+            }
+        }
+        if (filter.duration_to !== undefined) {
+            // Expect a number in minutes
+            let duration_to = parseInt(filter.duration_to);
+            if(duration_to != 0) {
+                filterObj.duration.to = duration_to;
             }
         }
 
