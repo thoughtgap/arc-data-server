@@ -10,7 +10,7 @@ export abstract class timelinesAnalysis {
         filter = undefined;
 
         // For each timeline, execute listPlaces and then flatten the result
-        let timelinesResults = timelines.map(timeline => timelineAnalysis.listPlaces(timeline, tlFilter));
+        let timelinesResults = timelines.map(timeline => singleTimelineAnalysis.listPlaces(timeline, tlFilter));
         timelinesResults = flattenArray(timelinesResults);
 
         // Remove Duplicates
@@ -25,7 +25,7 @@ export abstract class timelinesAnalysis {
         filter = undefined;
 
         // For each timeline, execute visitsWithoutPlace
-        let timelinesResults = timelines.map(timeline => timelineAnalysis.visitsWithoutPlace(timeline, tlFilter))
+        let timelinesResults = timelines.map(timeline => singleTimelineAnalysis.visitsWithoutPlace(timeline, tlFilter))
             .filter(arrays => arrays.length > 0); // Remove empty arrays
         return flattenArray(timelinesResults);
     }
@@ -34,7 +34,7 @@ export abstract class timelinesAnalysis {
         let tlFilter = new timelineFilter(filter); // Handover the filter
         filter = undefined;
 
-        let timelinesResults = timelines.map(timeline => timelineAnalysis.listActivityTypes(timeline, tlFilter))
+        let timelinesResults = timelines.map(timeline => singleTimelineAnalysis.listActivityTypes(timeline, tlFilter))
             .filter(arrays => arrays.length > 0);
         timelinesResults = flattenArray(timelinesResults);
 
@@ -50,7 +50,7 @@ export abstract class timelinesAnalysis {
         filter = undefined;
 
         // For each timeline, execute listPlaces and then flatten the result
-        let timelinesResults = timelines.map(timeline => timelineAnalysis.listTimestamps(timeline, tlFilter));
+        let timelinesResults = timelines.map(timeline => singleTimelineAnalysis.listTimestamps(timeline, tlFilter));
         timelinesResults = flattenArray(timelinesResults);
         return timelinesResults;
     }
@@ -60,7 +60,7 @@ export abstract class timelinesAnalysis {
         filter = undefined;
 
         // For each timeline, execute listPlaces and then flatten the result
-        let timelinesResults = timelines.map(timeline => timelineAnalysis.listTimelineItems(timeline, tlFilter));
+        let timelinesResults = timelines.map(timeline => singleTimelineAnalysis.listTimelineItems(timeline, tlFilter));
         timelinesResults = flattenArray(timelinesResults);
         return timelinesResults;
     }
@@ -100,7 +100,7 @@ function displayDuration(millisec: number) {
 }
 
 // Analysis functions for one arcTimeline
-export abstract class timelineAnalysis {
+export abstract class singleTimelineAnalysis {
 
     // Creates a list with all the places visited in this timeline
     public static listPlaces(timeline: arcTimeline, tlFilter: timelineFilter): Array<any> {
