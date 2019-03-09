@@ -40,7 +40,7 @@ class App {
 
     // List Layer 1 Files
     router.get("/files/source", (req, res, next) => {
-      console.log("/files/source");
+      console.log("URL: "+req.url);
       let obj = {
         "description": "A list of all relevant files in the iCloud folder",
         "response": arcLayer1Dir.getFilenameList()
@@ -50,7 +50,7 @@ class App {
 
     // List Layer 2 Files
     router.get("/files/jsonexport", (req, res, next) => {
-      console.log("/files/jsonexport");
+      console.log("URL: "+req.url);
 
       let obj = {
         "description": "A list of all the Arc json export files.",
@@ -65,7 +65,7 @@ class App {
     // })
 
     router.get("/classifications/places", (req, res, next) => {
-      console.log("/classifications/places");
+      console.log("URL: "+req.url);
 
       let obj = {
         "description": "The classified places (by place.name) put into the categories",
@@ -76,9 +76,10 @@ class App {
 
 
     router.get("/visits/places/", (req, res, next) => {
-      console.log("/visits/places/");
+      console.log("URL: "+req.url);
 
       let filter = req.query; // Fetch the filter from the URL get parameters
+      console.log(`Using filter: `+JSON.stringify(filter))
 
       let obj = {
         "description": "A list of all the places that were visited.",
@@ -89,9 +90,10 @@ class App {
 
 
     router.get("/visits/places/unassigned", (req, res, next) => {
-      console.log("/visits/places/unassigned");
+      console.log("URL: "+req.url);
 
       let filter = req.query; // Fetch the filter from the URL get parameters
+      console.log(`Using filter: `+JSON.stringify(filter))
 
       let obj = {
         "description": "A list of Visits with no assigned place.",
@@ -101,9 +103,10 @@ class App {
     })
 
     router.get("/activities/types", (req, res, next) => {
-      console.log("/activities/types");
+      console.log("URL: "+req.url);
 
       let filter = req.query; // Fetch the filter from the URL get parameters
+      console.log(`Using filter: `+JSON.stringify(filter))
 
       let obj = {
         "description": "A list of all activity types",
@@ -114,18 +117,32 @@ class App {
 
 
     router.get("/timelineItems/timestamps", (req, res, next) => {
-      console.log("/timelineItems/timestamps");
+      console.log("URL: "+req.url);
 
       let filter = req.query; // Fetch the filter from the URL get parameters
-
+      console.log(`Using filter: `+JSON.stringify(filter))
+    
       let obj = {
-        "description": "A list of all activity types",
+        "description": "A list of timestamps (filtered)",
         "response": arcAnalysis.timelinesAnalysis.listTimestamps(arcLayer2Dir.getArcTimelines(),filter)
       };
 
       res.json(obj);
     })
 
+    router.get("/timelineItems/list", (req, res, next) => {
+      console.log("URL: "+req.url);
+
+      let filter = req.query; // Fetch the filter from the URL get parameters
+      console.log(`Using filter: `+JSON.stringify(filter))
+    
+      let obj = {
+        "description": "A list of timelineItems (filtered)",
+        "response": arcAnalysis.timelinesAnalysis.listTimelineItems(arcLayer2Dir.getArcTimelines(),filter)
+      };
+
+      res.json(obj);
+    })
     this.express.use('/', router)
   }
 }

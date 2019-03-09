@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Heatmap</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.6/d3.min.js"
+        integrity="sha256-nLyOKFHjDHFEMwScDT3vCexJK5FyXc5O8vCpzPTjB9M=" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cal-heatmap/3.6.2/cal-heatmap.css"
+        integrity="sha256-NUEfBSwV/EfyeHvGiRakfSlgBrv1XZfsGGRpUBvDTq0=" crossorigin="anonymous" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cal-heatmap/3.6.2/cal-heatmap.min.js"
+        integrity="sha256-m1BO8/wfcWmcga+RGa+DWJudKXDgDUroGe1DNcUDQao=" crossorigin="anonymous"></script>
+</head>
+
+<body>
+    <h1>timelineItems Heatmap</h1>
+
+    <button onClick="cal.previous();" style="margin-bottom: 10px;" class="btn">&lt;</i></button>
+    <button onClick="cal.next();" style="margin-bottom: 10px;" class="btn">&gt;</button>
+
+    <div id="example-d"></div>
+
+    <div id="cal-heatmap"></div>
+    <script type="text/javascript">
+
+        var parser = function (data) {
+            var stats = {};
+            for (var d in data.response) {
+                stats[data.response[d].timestamp] = 80;
+            }
+            return stats;
+        };
+
+        var cal = new CalHeatMap();
+
+        var dataURL = "http://localhost:3000/timelineItems/timestamps?from={{d:start}}&to={{d:end}}";
+
+        var calConfig = {
+            itemSelector: "#example-d",
+            domain: "year",
+            subDomain: "day",
+            dataType: "json",
+            start: new Date(2019, 0),
+            cellSize: 10,
+            range: 1,
+            legend: [20, 40, 60, 80]
+            , afterLoadData: parser
+            , data: dataURL
+        };
+
+        cal.init(calConfig);
+
+        function update(activityType) {
+            if (activityType != "") {
+                var url = 'http://localhost:3000/timelineItems/timestamps?activityType=' + activityType + '&from={{d:start}}&to={{d:end}}';
+            }
+            else {
+                var url = 'http://localhost:3000/timelineItems/timestamps?from={{d:start}}&to={{d:end}}';
+            }
+
+            cal.update(url);
+            cal.options.data = url;
+        }
+    </script>
+
+    <br /><br /><br />
+    <p>
+        Filter activity type:
+        <button type="button" class="button btn-dark" onClick="update('')">all</button>
+        <button type="button" class="button btn-dark" onClick="update('stationary')">stationary</button>
+        <button type="button" class="button btn-dark" onClick="update('walking')">walking</button>
+        <button type="button" class="button btn-dark" onClick="update('cycling')">cycling</button>
+        <button type="button" class="button btn-dark" onClick="update('running')">running</button>
+        <button type="button" class="button btn-dark" onClick="update('transport')">transport</button>
+        <button type="button" class="button btn-dark" onClick="update('car')">car</button>
+        <button type="button" class="button btn-dark" onClick="update('train')">train</button>
+        <button type="button" class="button btn-dark" onClick="update('boat')">boat</button>
+        <button type="button" class="button btn-dark" onClick="update('tram')">tram</button>
+        <button type="button" class="button btn-dark" onClick="update('bogus')">bogus</button>
+        <button type="button" class="button btn-dark" onClick="update('bus')">bus</button>
+    </p>
+
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+        integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+</body>
+</html>
