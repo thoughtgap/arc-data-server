@@ -65,7 +65,16 @@ export class arcTimelineItem {
         this.itemId = arcTimelineItem.itemId;
         this.nextItemId = arcTimelineItem.nextItemId;
         this.previousItemId = arcTimelineItem.previousItemId;
-        
+
+        // Parse old timestamp format (pre <09.2018), timestamp from 2001-01-01
+        // Convert to unix timestamp from 1970-01-01
+        if(typeof arcTimelineItem.startDate == 'number') {
+            arcTimelineItem.startDate = (arcTimelineItem.startDate + 978307200).toFixed(0) * 1000;
+        }
+        if(typeof arcTimelineItem.endDate == 'number') {
+            arcTimelineItem.endDate = (arcTimelineItem.endDate + 978307200).toFixed(0) * 1000;
+        }
+
         this.startDate = new Date(arcTimelineItem.startDate);
         this.endDate = new Date(arcTimelineItem.endDate);
         
