@@ -161,12 +161,14 @@ export class File {
 }
 
 export class config {
-    // Load Directory Paths from config/directories.json
+    // Load Directory Paths from config/directories.mine.json or config/directories.json
     arcLayer1Dir: string
     arcLayer2Dir: string
     arcLayer2AutoLoadOnStart: boolean = false
     
-    configFile = "config/directories.json"
+    configFileMine = "config/directories.mine.json"
+    configFileGit  = "config/directories.json"
+
     configLoaded: boolean = false
 
     constructor() {
@@ -174,8 +176,14 @@ export class config {
     }
 
     loadConfig(): boolean {
-        let fileFullPath = this.configFile;
-    
+        let fileFullPath: string;
+        if (fs.existsSync(this.configFileMine)) {
+            fileFullPath = this.configFileMine;
+        }
+        else {
+            fileFullPath = this.configFileGit;
+        }
+
         console.log(`Reading JSON file ${fileFullPath}`)
         let config = JSON.parse(fs.readFileSync(fileFullPath, 'utf8'));
 

@@ -9,7 +9,16 @@ export class Places {
     classificationLoaded:boolean = false
 
     loadClassification(): boolean {
-        let fileFullPath = "config/locationtypes.json";
+        let fileFullPathMine = "config/locationtypes.mine.json"; // The locally modified version, prefered
+        let fileFullPathGit  = "config/locationtypes.json";          // The github version, fallback
+        let fileFullPath = "";
+
+        if (fs.existsSync(fileFullPathMine)) {
+            fileFullPath = fileFullPathMine;
+        }
+        else {
+            fileFullPath = fileFullPathGit;
+        }
         
         console.log(`Reading JSON file ${fileFullPath}`)
         this.classification = JSON.parse(fs.readFileSync(fileFullPath, 'utf8'));

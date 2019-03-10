@@ -127,3 +127,5 @@ test/*.js
 *.map
 
 src/playground/
+config/locationtypes.mine.json
+config/directories.mine.json
