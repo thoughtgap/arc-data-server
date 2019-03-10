@@ -49,7 +49,7 @@ You can optionally filter the queried timelineItems with the following URL-Param
     * Timeline items for all cycling activities: [`/timelineItems/timestamps?activityType=cycling`](http://localhost:3000/timelineItems/timestamps?activityType=cycling)
 * Duration Filters:
   * `duration_from=30` Minimum duration in minutes
-  * `duration_to=30` Maximum duration in minutes
+  * `duration_to=60` Maximum duration in minutes
   * Examples:
     * Timeline items for all cycling activities longer than one hour: [`/timelineItems/timestamps?activityType=cycling&duration_from=60`](http://localhost:3000/timelineItems/timestamps?activityType=cycling&duration_from=60)
 
