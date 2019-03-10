@@ -103,8 +103,22 @@ export class arcTimelineItem {
     }
 
     // Return duration in minutes
-    public getDurationMinutes(): number {
-        return (this.endDate.getTime() - this.startDate.getTime())/1000/60;
+    public getDuration(format:String="ms"): number {
+        let dur = this.endDate.getTime() - this.startDate.getTime();
+
+        if(format == "ms") {
+            return dur;
+        }
+        else if (format == "s") {
+            return dur / 1000; // Seconds
+        }
+        else if(format == "m") {
+            return dur / 1000 / 60; // Minutes
+        }
+        else if(format == "h") {
+            return dur / 1000 / 60 / 60; // Hours
+        }
+        return dur;
     }
 }
 

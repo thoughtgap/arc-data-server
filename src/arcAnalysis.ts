@@ -81,7 +81,7 @@ function flattenArray(nestedArr) {
     return [].concat(...nestedArr);
 }
 
-function displayDuration(millisec: number) {
+function formatDuration(millisec: number) {
     const normalizeTime = (time: string): string => (time.length === 1) ? time.padStart(2, '0') : time;
 
     let seconds: string = (millisec / 1000).toFixed(0);
@@ -163,7 +163,7 @@ export abstract class singleTimelineAnalysis {
                 return {
                     startDate: timelineItem.startDate,
                     endDate: timelineItem.endDate,
-                    duration: displayDuration(timelineItem.endDate - timelineItem.startDate),
+                    duration: formatDuration(timelineItem.getDuration()),
                     streetAddress: timelineItem.streetAddress,
                 }
             });
@@ -221,10 +221,10 @@ export abstract class singleTimelineAnalysis {
             }
 
             // Duration Filter
-            if(filter.duration.from && filter.duration.from > timelineItem.getDurationMinutes()) {
+            if(filter.duration.from && filter.duration.from > timelineItem.getDuration("m")) {
                 return false;
             }
-            if(filter.duration.to && filter.duration.to < timelineItem.getDurationMinutes()) {
+            if(filter.duration.to && filter.duration.to < timelineItem.getDuration("m")) {
                 return false;
             }
 
