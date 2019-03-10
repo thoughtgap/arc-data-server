@@ -51,7 +51,15 @@ You can optionally filter the queried timelineItems with the following URL-Param
   * `duration_from=30` Minimum duration in minutes
   * `duration_to=60` Maximum duration in minutes
   * Examples:
-    * Timeline items for all cycling activities longer than one hour: [`/timelineItems/timestamps?activityType=cycling&duration_from=60`](http://localhost:3000/timelineItems/timestamps?activityType=cycling&duration_from=60)
+    * Timeline items for all cycling activities longer than one hour: [`/timelineItems/list?activityType=cycling&duration_from=60`](http://localhost:3000/timelineItems/list?activityType=cycling&duration_from=60)
+* Place Filters:
+  * `place=Bakery,Café` A (comma-separated) list of exact match place names
+  * `placeClass=home` A place classification, maintained in `config/locationtypes.json`
+  * `placeUnassigned=1` Only show items with unassigned place
+  * Examples:
+    * Timeline items at work locations: [`/timelineItems/list?placeClass=work`](http://localhost:3000/timelineItems/list?placeClass=work)
+    * Timeline items at "Mom and Dads": [`/timelineItems/list?place=Mom and Dads`](http://localhost:3000/timelineItems/list?place=Mom and Dads)
+    * Visits without assigned place: [`/timelineItems/list?placeUnassigned=1&type=visits`](http://localhost:3000/timelineItems/list?placeUnassigned=1&type=visits), same as [`/visits/places/unassigned`](http://localhost:3000/visits/places/unassigned)
 
 ## Commands
 

@@ -83,7 +83,7 @@ class App {
 
       let obj = {
         "description": "A list of all the places that were visited.",
-        "response": arcAnalysis.timelinesAnalysis.listPlaces(arcLayer2Dir.getArcTimelines(),filter)
+        "response": arcAnalysis.timelinesAnalysis.listPlaces(arcLayer2Dir.getArcTimelines(),filter, arcClassificationPlaces)
       }
       res.json(obj);
     })
@@ -97,7 +97,7 @@ class App {
 
       let obj = {
         "description": "A list of Visits with no assigned place.",
-        "response": arcAnalysis.timelinesAnalysis.visitsWithoutPlace(arcLayer2Dir.getArcTimelines(),filter)
+        "response": arcAnalysis.timelinesAnalysis.visitsWithoutPlace(arcLayer2Dir.getArcTimelines(),filter, arcClassificationPlaces)
       };
       res.json(obj);
     })
@@ -110,7 +110,7 @@ class App {
 
       let obj = {
         "description": "A list of all activity types",
-        "response": arcAnalysis.timelinesAnalysis.listActivityTypes(arcLayer2Dir.getArcTimelines(),filter)
+        "response": arcAnalysis.timelinesAnalysis.listActivityTypes(arcLayer2Dir.getArcTimelines(),filter, arcClassificationPlaces)
       };
       res.json(obj);
     })
@@ -124,7 +124,7 @@ class App {
     
       let obj = {
         "description": "A list of timestamps (filtered)",
-        "response": arcAnalysis.timelinesAnalysis.listTimestamps(arcLayer2Dir.getArcTimelines(),filter)
+        "response": arcAnalysis.timelinesAnalysis.listTimestamps(arcLayer2Dir.getArcTimelines(),filter, arcClassificationPlaces)
       };
 
       res.json(obj);
@@ -138,7 +138,7 @@ class App {
     
       let obj = {
         "description": "A list of timelineItems (filtered)",
-        "response": arcAnalysis.timelinesAnalysis.listTimelineItems(arcLayer2Dir.getArcTimelines(),filter)
+        "response": arcAnalysis.timelinesAnalysis.listTimelineItems(arcLayer2Dir.getArcTimelines(),filter, arcClassificationPlaces)
       };
 
       res.json(obj);

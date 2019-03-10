@@ -1,12 +1,13 @@
 import { arcTimeline } from "./arcjson";
+import { Places } from "./arcClassification";
 import { create } from "domain";
 
 /* Class for analysing parsed arc data */
 
 // Analysis functions for multiple arcTimelines (usually passes to functions analysing the single timelines)
 export abstract class timelinesAnalysis {
-    public static listPlaces(timelines: arcTimeline[], filter): Array<any> {
-        let tlFilter = new timelineFilter(filter); // Handover the filter
+    public static listPlaces(timelines: arcTimeline[], filter, classificationPlaces: Places): Array<any> {
+        let tlFilter = new timelineFilter(filter,classificationPlaces); // Handover the filter
         filter = undefined;
 
         // For each timeline, execute listPlaces and then flatten the result
@@ -20,8 +21,8 @@ export abstract class timelinesAnalysis {
         return timelinesResults;
     }
 
-    public static visitsWithoutPlace(timelines: arcTimeline[], filter): Array<any> {
-        let tlFilter = new timelineFilter(filter); // Handover the filter
+    public static visitsWithoutPlace(timelines: arcTimeline[], filter, classificationPlaces: Places): Array<any> {
+        let tlFilter = new timelineFilter(filter,classificationPlaces); // Handover the filter
         filter = undefined;
 
         // For each timeline, execute visitsWithoutPlace
@@ -30,8 +31,8 @@ export abstract class timelinesAnalysis {
         return flattenArray(timelinesResults);
     }
 
-    public static listActivityTypes(timelines: arcTimeline[], filter): Array<any> {
-        let tlFilter = new timelineFilter(filter); // Handover the filter
+    public static listActivityTypes(timelines: arcTimeline[], filter, classificationPlaces: Places): Array<any> {
+        let tlFilter = new timelineFilter(filter,classificationPlaces); // Handover the filter
         filter = undefined;
 
         let timelinesResults = timelines.map(timeline => singleTimelineAnalysis.listActivityTypes(timeline, tlFilter))
@@ -45,8 +46,8 @@ export abstract class timelinesAnalysis {
         return timelinesResults;
     }
 
-    public static listTimestamps(timelines: arcTimeline[], filter): Array<any> {
-        let tlFilter = new timelineFilter(filter); // Handover the filter
+    public static listTimestamps(timelines: arcTimeline[], filter, classificationPlaces: Places): Array<any> {
+        let tlFilter = new timelineFilter(filter,classificationPlaces); // Handover the filter
         filter = undefined;
 
         // For each timeline, execute listPlaces and then flatten the result
@@ -55,8 +56,8 @@ export abstract class timelinesAnalysis {
         return timelinesResults;
     }
 
-    public static listTimelineItems(timelines: arcTimeline[], filter): Array<any> {
-        let tlFilter = new timelineFilter(filter); // Handover the filter
+    public static listTimelineItems(timelines: arcTimeline[], filter, classificationPlaces: Places): Array<any> {
+        let tlFilter = new timelineFilter(filter,classificationPlaces); // Handover the filter
         filter = undefined;
 
         // For each timeline, execute listPlaces and then flatten the result
@@ -120,11 +121,11 @@ export abstract class singleTimelineAnalysis {
     public static visitsWithoutPlace(timeline: arcTimeline, tlFilter: timelineFilter): Array<any> {
         //let filter = timelineFilter.create({ type: ["visits"] }); // Only the visits
 
-        // Override the type filter if this had been set. Nothing else makes sense
-        tlFilter.filterObj.type = ["visits"];
+        // Override the type filter if this had been set. Other values don't make sense here.
+        tlFilter.filterObj.type = ["visits"];       // Only visits
+        tlFilter.filterObj.place.unassigned = true; // Only unassigned places
 
         return this.itemFilter(timeline, tlFilter)
-            .filter(timelineItem => !timelineItem.place)       // Only the visits without assigned place
             .map(timelineItem => {                             // Return only some fields
                 return {
                     startDate: timelineItem.startDate,
@@ -227,6 +228,20 @@ export abstract class singleTimelineAnalysis {
                 return false;
             }
 
+            // Place Filter
+            if(filter.place.names.length > 0) {
+                if (!timelineItem.place || !filter.place.names.includes(timelineItem.place.name)) {
+                    return false;
+                }
+            }
+
+            // Places - only unassigned
+            if(filter.place.unassigned) {
+                if(timelineItem.place) { // Only include items without places
+                    return false;
+                }
+            }
+
             return true;
         });
     }
@@ -247,6 +262,11 @@ interface filterObj {
     duration?: {
         from?: Number,
         to?: Number
+    },
+    place?: {
+        class?: String,
+        names?: String[],
+        unassigned?: Boolean
     }
 }
 
@@ -255,13 +275,13 @@ class timelineFilter {
     // The filter object can come from other functions or from URL parameters
     public filterObj: filterObj = {};
 
-    constructor(filter) {
+    constructor(filter, arcClassificationPlaces) {
         this.filterObj = {};
 
-        this.create(filter);
+        this.create(filter, arcClassificationPlaces);
     }
 
-    public create(filter): filterObj {
+    public create(filter, arcClassificationPlaces): filterObj {
         // Creates a "clean" timelineFilter-Object from the input Object
         let filterObj: filterObj = {};
 
@@ -343,6 +363,30 @@ class timelineFilter {
             if(duration_to != 0) {
                 filterObj.duration.to = duration_to;
             }
+        }
+
+        // Place Filter
+        filterObj.place = {class: null, names: [], unassigned: null};
+        // &placeClass=home
+        if (filter.placeClass !== undefined) {
+            filterObj.place.class = filter.placeClass;
+
+            // Resolve the places classification into a PlacesString
+            let placesClassification = arcClassificationPlaces.getClassification();
+            if(placesClassification[filter.placeClass]) {             // If the classification exists
+                filterObj.place.names.push(...placesClassification[filter.placeClass]); // Add the array of places to place.names
+            }
+            else {
+                console.error("Didn't find the defined places classification.")
+            }
+        }
+        // &place=Bakery or &place=Bakery,Café
+        if (filter.place !== undefined) {
+            filterObj.place.names.push(...filter.place.split(','));
+        }
+        // &placeUnassigned=1
+        if (filter.placeUnassigned !== undefined) {
+            filterObj.place.unassigned = true;
         }
 
         this.filterObj = filterObj;
