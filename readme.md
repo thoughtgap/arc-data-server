@@ -12,10 +12,12 @@ The intention is to provide a base for further analysis of the data.
 
 ## Configuration
 
-* `config/directories.json` The paths to the directories are specified here.
+* `config/directories.mine.json` / `config/directories.json` The paths to the directories are specified here.
   * `layer1`: iCloud directory where Arc stores its daily json.gz outputs
   * `layer2`: Local directory (defaults to `arc-data/jsonexport`), containing uncompressed json files
-* `config/locationtypes.json` This file is used for determining workplaces and home locations (in order to analyse commutes). It references Arc places by the `place.name` attribute.
+* `config/locationtypes.mine.json` / `config/locationtypes.json` This file is used for determining workplaces and home locations (in order to analyse commutes). It references Arc places by the `place.name` attribute.
+
+To separate standard config file and your own values, you can copy the files from `<configfile>.json` to `<configfile>.mine.json`. The `.mine`-file will be read preferrably. Their changes will not be tracked to Git.
 
 ## Endpoints
 
