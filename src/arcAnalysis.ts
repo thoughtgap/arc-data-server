@@ -7,7 +7,7 @@ import { create } from "domain";
 // Analysis functions for multiple arcTimelines (usually passes to functions analysing the single timelines)
 export abstract class timelinesAnalysis {
     public static listPlaces(timelines: arcTimeline[], filter, classificationPlaces: Places): Array<any> {
-        let tlFilter = new timelineFilter(filter,classificationPlaces); // Handover the filter
+        let tlFilter = new timelineFilter(filter, classificationPlaces); // Handover the filter
         filter = undefined;
 
         // For each timeline, execute listPlaces and then flatten the result
@@ -22,7 +22,7 @@ export abstract class timelinesAnalysis {
     }
 
     public static visitsWithoutPlace(timelines: arcTimeline[], filter, classificationPlaces: Places): Array<any> {
-        let tlFilter = new timelineFilter(filter,classificationPlaces); // Handover the filter
+        let tlFilter = new timelineFilter(filter, classificationPlaces); // Handover the filter
         filter = undefined;
 
         // For each timeline, execute visitsWithoutPlace
@@ -32,7 +32,7 @@ export abstract class timelinesAnalysis {
     }
 
     public static listActivityTypes(timelines: arcTimeline[], filter, classificationPlaces: Places): Array<any> {
-        let tlFilter = new timelineFilter(filter,classificationPlaces); // Handover the filter
+        let tlFilter = new timelineFilter(filter, classificationPlaces); // Handover the filter
         filter = undefined;
 
         let timelinesResults = timelines.map(timeline => singleTimelineAnalysis.listActivityTypes(timeline, tlFilter))
@@ -47,7 +47,7 @@ export abstract class timelinesAnalysis {
     }
 
     public static listTimestamps(timelines: arcTimeline[], filter, classificationPlaces: Places): Array<any> {
-        let tlFilter = new timelineFilter(filter,classificationPlaces); // Handover the filter
+        let tlFilter = new timelineFilter(filter, classificationPlaces); // Handover the filter
         filter = undefined;
 
         // For each timeline, execute listPlaces and then flatten the result
@@ -57,7 +57,7 @@ export abstract class timelinesAnalysis {
     }
 
     public static listTimelineItems(timelines: arcTimeline[], filter, classificationPlaces: Places): Array<any> {
-        let tlFilter = new timelineFilter(filter,classificationPlaces); // Handover the filter
+        let tlFilter = new timelineFilter(filter, classificationPlaces); // Handover the filter
         filter = undefined;
 
         // For each timeline, execute listPlaces and then flatten the result
@@ -165,6 +165,8 @@ export abstract class singleTimelineAnalysis {
                     endDate: timelineItem.endDate,
                     duration: formatDuration(timelineItem.getDuration()),
                     streetAddress: timelineItem.streetAddress,
+                    activityType: timelineItem.activityType,
+                    isVisit: timelineItem.isVisit
                 }
             });
     }
@@ -182,7 +184,7 @@ export abstract class singleTimelineAnalysis {
 
         let filter = tlFilter.filterObj;
 
-        return timeline.timelineItems.filter(timelineItem => {
+        return timeline.timelineItems.filter((timelineItem, i_timelineItem) => {
 
             // TimelineItem-Type
             if (filter.type.length > 0) {
@@ -221,27 +223,51 @@ export abstract class singleTimelineAnalysis {
             }
 
             // Duration Filter
-            if(filter.duration.from && filter.duration.from > timelineItem.getDuration("m")) {
+            if (filter.duration.from && filter.duration.from > timelineItem.getDuration("m")) {
                 return false;
             }
-            if(filter.duration.to && filter.duration.to < timelineItem.getDuration("m")) {
+            if (filter.duration.to && filter.duration.to < timelineItem.getDuration("m")) {
                 return false;
             }
 
             // Place Filter
-            if(filter.place.names.length > 0) {
+            if (filter.place.names.length > 0) {
                 if (!timelineItem.place || !filter.place.names.includes(timelineItem.place.name)) {
                     return false;
                 }
             }
 
             // Places - only unassigned
-            if(filter.place.unassigned) {
-                if(timelineItem.place) { // Only include items without places
+            if (filter.place.unassigned) {
+                if (timelineItem.place) { // Only include items without places
                     return false;
                 }
             }
 
+            // Route Filter
+            
+            // Check previous timelineItem for the desired place(s)
+            if (filter.place.from.names.length > 0) {
+                if(timeline.timelineItems[i_timelineItem-1]) {
+                    let previous_timelineItem = timeline.timelineItems[i_timelineItem-1]
+
+                    if (!previous_timelineItem || !previous_timelineItem.place || !filter.place.from.names.includes(previous_timelineItem.place.name)) {
+                        return false;
+                    }
+                }
+            }
+
+            // Check next timelineItem for the desired place(s)
+            if (filter.place.to.names.length > 0) {
+                if(timeline.timelineItems[i_timelineItem+1]) {
+                    let previous_timelineItem = timeline.timelineItems[i_timelineItem+1]
+
+                    if (!previous_timelineItem || !previous_timelineItem.place || !filter.place.to.names.includes(previous_timelineItem.place.name)) {
+                        return false;
+                    }
+                }
+            }
+            
             return true;
         });
     }
@@ -266,7 +292,15 @@ interface filterObj {
     place?: {
         class?: String,
         names?: String[],
-        unassigned?: Boolean
+        unassigned?: Boolean,
+        from?: {
+            names?: String[],
+            class?: String
+        },
+        to?: {
+            names?: String[],
+            class?: String
+        }
     }
 }
 
@@ -349,45 +383,81 @@ class timelineFilter {
         }
 
         // Duration Filter &duration_from=60 &duration_to=120
-        filterObj.duration = {from: null, to: null};
+        filterObj.duration = { from: null, to: null };
         if (filter.duration_from !== undefined) {
             // Expect a number in minutes
             let duration_from = parseInt(filter.duration_from);
-            if(duration_from != 0) {
+            if (duration_from != 0) {
                 filterObj.duration.from = duration_from;
             }
         }
         if (filter.duration_to !== undefined) {
             // Expect a number in minutes
             let duration_to = parseInt(filter.duration_to);
-            if(duration_to != 0) {
+            if (duration_to != 0) {
                 filterObj.duration.to = duration_to;
             }
         }
 
         // Place Filter
-        filterObj.place = {class: null, names: [], unassigned: null};
+        filterObj.place = {
+            class: null,
+            names: [],
+            unassigned: null,
+            from: {
+                names: [],
+                class: null
+            },
+            to: {
+                names: [],
+                class: null
+            }
+        };
+        
         // &placeClass=home
         if (filter.placeClass !== undefined) {
             filterObj.place.class = filter.placeClass;
 
             // Resolve the places classification into a PlacesString
-            let placesClassification = arcClassificationPlaces.getClassification();
-            if(placesClassification[filter.placeClass]) {             // If the classification exists
-                filterObj.place.names.push(...placesClassification[filter.placeClass]); // Add the array of places to place.names
-            }
-            else {
-                console.error("Didn't find the defined places classification.")
-            }
+            filterObj.place.names.push(...arcClassificationPlaces.getClassification(filter.placeClass)); // Add the array of places to place.names
         }
+
         // &place=Bakery or &place=Bakery,Café
         if (filter.place !== undefined) {
             filterObj.place.names.push(...filter.place.split(','));
         }
+
         // &placeUnassigned=1
         if (filter.placeUnassigned !== undefined) {
             filterObj.place.unassigned = true;
         }
+        
+        // &placeFromClass=home
+        if (filter.placeFromClass !== undefined) {
+            filterObj.place.from.class = filter.placeFromClass;
+
+            // Resolve the places classification into a PlacesString
+            filterObj.place.from.names.push(...arcClassificationPlaces.getClassification(filterObj.place.from.class)); // Add the array of places to place.names
+        }
+
+        // &placeFrom=Bakery or &placeFrom=Bakery,Café
+        if (filter.placeFrom !== undefined) {
+            filterObj.place.from.names.push(...filter.placeFrom.split(','));
+        }
+
+        // &placeToClass=home
+        if (filter.placeToClass !== undefined) {
+            filterObj.place.to.class = filter.placeToClass;
+
+            // Resolve the places classification into a PlacesString
+            filterObj.place.to.names.push(...arcClassificationPlaces.getClassification(filterObj.place.to.class)); // Add the array of places to place.names
+        }
+
+        // &placeTo=Bakery or &placeTo=Bakery,Café
+        if (filter.placeTo !== undefined) {
+            filterObj.place.to.names.push(...filter.placeTo.split(','));
+        }
+        
 
         this.filterObj = filterObj;
         return filterObj;

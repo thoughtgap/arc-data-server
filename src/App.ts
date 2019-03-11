@@ -69,7 +69,7 @@ class App {
 
       let obj = {
         "description": "The classified places (by place.name) put into the categories",
-        "response": arcClassificationPlaces.getClassification()
+        "response": arcClassificationPlaces.getClassifications()
       }
       res.json(obj);
     })

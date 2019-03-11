@@ -27,10 +27,21 @@ export class Places {
         return true;
     }
 
-    getClassification(): object {
+    getClassifications(): object {
         if(!this.classificationLoaded) {
             this.loadClassification();
         }
         return this.classification;
+    }
+
+    getClassification(classification: string): string[] {
+        if(!this.classificationLoaded) {
+            this.loadClassification();
+        }
+
+        if(this.classification[classification]) {
+            return this.classification[classification];
+        }
+        return [];
     }
 }

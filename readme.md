@@ -62,6 +62,11 @@ You can optionally filter the queried timelineItems with the following URL-Param
     * Timeline items at work locations: [`/timelineItems/list?placeClass=work`](http://localhost:3000/timelineItems/list?placeClass=work)
     * Timeline items at "Mom and Dads": [`/timelineItems/list?place=Mom and Dads`](http://localhost:3000/timelineItems/list?place=Mom and Dads)
     * Visits without assigned place: [`/timelineItems/list?placeUnassigned=1&type=visits`](http://localhost:3000/timelineItems/list?placeUnassigned=1&type=visits), same as [`/visits/places/unassigned`](http://localhost:3000/visits/places/unassigned)
+* Route (e.g. commute) Filters
+  * `placeFrom=Bakery,Café` A (comma-separated) list of exact match place names
+  * `placeFromClass=home` A place classification, maintained in `config/locationtypes.json`
+  * `placeTo=Supermarket` A (comma-separated) list of exact match place names
+  * `placeToClass=work` A place classification, maintained in `config/locationtypes.json`
 
 ## Commands
 
