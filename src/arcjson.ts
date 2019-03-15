@@ -4,6 +4,14 @@ Analysis functionality is added via arcAnalysis module to keep structure + analy
 
 import fs = require('fs');
 
+// Helper functions   
+function degreesToRadians(degrees: number) {
+    return degrees * Math.PI / 180;
+}
+function radiansToDegrees(radians: number) {
+    return radians * 180 / Math.PI;
+}
+
 // An Arc-Timeline (can be any length)
 export class arcTimeline {
     timelineItems: arcTimelineItem[]
@@ -132,6 +140,78 @@ export class arcTimelineItem {
         }
         return dur;
     }
+
+
+    // Great circle distance between two items (either arcTimelineItem or arcPlace) in m
+    // see http://www.movable-type.co.uk/scripts/latlong.html
+    // var R = 6371e3; // metres
+    // var φ1 = lat1.toRadians();
+    // var φ2 = lat2.toRadians();
+    // var Δφ = (lat2-lat1).toRadians();
+    // var Δλ = (lon2-lon1).toRadians();
+
+    // var a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+    //         Math.cos(φ1) * Math.cos(φ2) *
+    //         Math.sin(Δλ/2) * Math.sin(Δλ/2);
+    // var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+
+    // var d = R * c;
+    public distanceTo(item: any): number {
+        let earthRadiusM = 6371000;
+
+        if (!this.center || !item || !item.center)
+        {
+            console.log(`distanceBetween: no place or center objects`);
+            return undefined; 
+        }
+
+        let c1 = this.center;
+        let c2 = item.center;
+
+        let lat1 = degreesToRadians(c1.latitude);
+        let lat2 = degreesToRadians(c2.latitude);
+
+        let dLat = degreesToRadians(c2.latitude - c1.latitude);
+        let dLon = degreesToRadians(c2.longitude - c1.longitude);
+
+        let a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                Math.cos(lat1) * Math.cos(lat2) *
+                Math.sin(dLon/2) * Math.sin(dLon/2); 
+        let c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
+
+        return earthRadiusM * c;
+    }
+
+    // Heading between two items (either arcTimelineItem or arcPlace) degrees
+    // see http://www.movable-type.co.uk/scripts/latlong.html
+    // var y = Math.sin(λ2-λ1) * Math.cos(φ2);
+    // var x = Math.cos(φ1)*Math.sin(φ2) -
+    //         Math.sin(φ1)*Math.cos(φ2)*Math.cos(λ2-λ1);
+    // var brng = Math.atan2(y, x).toDegrees();
+    public bearingTo(item: any): number {
+        if (!this.center || !item || !item.center)
+        {
+            console.log(`bearingBetween: no place or center objects`);
+            return undefined;
+        }
+
+        let c1 = this.center;
+        let c2 = item.center;
+
+        let lat1 = degreesToRadians(c1.latitude);  // φ1
+        let lat2 = degreesToRadians(c2.latitude);  // φ2
+        let lon1 = degreesToRadians(c1.longitude); // λ1
+        let lon2 = degreesToRadians(c2.longitude); // λ2
+
+        let y = Math.sin(lon2-lon1) * Math.cos(lat2);
+        let x = Math.cos(lat1) * Math.sin(lat2) -
+                Math.sin(lat1) * Math.cos(lat2) * Math.cos(lon2 - lon1);
+
+        let brng = Math.atan2(y,x)
+
+        return (radiansToDegrees(brng)+360) % 360;
+    }
+
 }
 
 interface arcPlace {
