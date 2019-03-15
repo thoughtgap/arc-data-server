@@ -24,30 +24,33 @@ export class arcTimeline {
 }
 
 export class arcTimelineItem {
-    itemId: String
-    nextItemId: String
-    previousItemId: String
+    itemId: string
+    nextItemId: string
+    previousItemId: string
     
     startDate: Date
     endDate: Date
     
     samples: arcSample[]
-    radius: Number
-    altitude: Number
-    center: Number
+    radius: number
+    altitude: number
+    center: {
+        longitude: number
+        latitude: number
+    }
     
-    activityType: String
-    activeEnergyBurned: Number
-    hkStepCount: Number
-    stepCount: Number
+    activityType: string
+    activeEnergyBurned: number
+    hkStepCount: number
+    stepCount: number
     
     isVisit: boolean
     
-    floorsAscended: Number
-    floorsDescended: Number
+    floorsAscended: number
+    floorsDescended: number
     
-    averageHeartRate: Number
-    maxHeartRate: Number
+    averageHeartRate: number
+    maxHeartRate: number
 
     /* Visit Fields */
     place:arcPlace
@@ -58,7 +61,7 @@ export class arcTimelineItem {
     /* Activity Fields */
     uncertainActivityType: boolean
     manualActivityType: boolean
-    activityTypeConfidenceScore: Number
+    activityTypeConfidenceScore: number
 
 
     constructor(arcTimelineItem) {
@@ -134,37 +137,37 @@ export class arcTimelineItem {
 interface arcPlace {
     placeId: String,
     radius: {
-        mean: Number
-        sd: Number
+        mean: number
+        sd: number
     }
-    isHome: Boolean
-    name: String
+    isHome: boolean
+    name: string
     center: {
-        longitude: Number
-        latitude: Number
+        longitude: number
+        latitude: number
     }
 }
 
 interface arcSample {
-    zAcceleration?: Number,
+    zAcceleration?: number,
     recordingState?: "recording",
-    secondsFromGMT?: Number // were only added recently
-    timelineItemId: String,
-    sampleId: String
+    secondsFromGMT?: number // were only added recently
+    timelineItemId: string,
+    sampleId: string
     location: {
-        verticalAccuracy: Number
-        speed: Number
-        longitude: Number
-        horizontalAccuracy: Number
-        course: Number
-        latitude: Number
+        verticalAccuracy: number
+        speed: number
+        longitude: number
+        horizontalAccuracy: number
+        course: number
+        latitude: number
         timestamp: Date
-        altitude: Number
+        altitude: number
     }
-    stepHz: Number
+    stepHz: number
     date: Date
-    movingState: String, // "stationary
-    courseVariance: Number
-    xyAcceleration: Number,
-    coreMotionActivityType: String // "walking"
+    movingState: string, // "stationary
+    courseVariance: number
+    xyAcceleration: number,
+    coreMotionActivityType: string // "walking"
 }
