@@ -103,33 +103,81 @@ function formatDuration(millisec: number) {
 function degreesToRadians(degrees: number) {
     return degrees * Math.PI / 180;
 }
+function radiansToDegrees(radians: number) {
+    return radians * 180 / Math.PI;
+}
 
-// great circle distance between two items (either arcTimelineItem or arcPlace) in m
+// Great circle distance between two items (either arcTimelineItem or arcPlace) in m
 // see http://www.movable-type.co.uk/scripts/latlong.html
+// var R = 6371e3; // metres
+// var φ1 = lat1.toRadians();
+// var φ2 = lat2.toRadians();
+// var Δφ = (lat2-lat1).toRadians();
+// var Δλ = (lon2-lon1).toRadians();
+
+// var a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+//         Math.cos(φ1) * Math.cos(φ2) *
+//         Math.sin(Δλ/2) * Math.sin(Δλ/2);
+// var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+
+// var d = R * c;
 function distanceBetween(item1: any, item2: any) {
     let earthRadiusM = 6371000;
 
-    if (!item1.center || !item2.center)
+    if (!item1 || !item1.center || !item2 || !item2.center)
     {
-        console.log(`distanceBetween: center object(s) missing`);
-        return Infinity;
+        console.log(`distanceBetween: no place or center objects`);
+        return undefined; // 20200 km, furthest distance on earth
     }
 
     let c1 = item1.center;
     let c2 = item2.center;
 
     let lat1 = degreesToRadians(c1.latitude);
-    let lat2 = degreesToRadians(c2.longitude);
+    let lat2 = degreesToRadians(c2.latitude);
 
     let dLat = degreesToRadians(c2.latitude - c1.latitude);
     let dLon = degreesToRadians(c2.longitude - c1.longitude);
 
-    var a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-            Math.sin(dLon/2) * Math.sin(dLon/2) * Math.cos(lat1) * Math.cos(lat2); 
-    var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
+    let a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+            Math.cos(lat1) * Math.cos(lat2) *
+            Math.sin(dLon/2) * Math.sin(dLon/2); 
+    let c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
 
     return earthRadiusM * c;
 }
+
+// Heading between two items (either arcTimelineItem or arcPlace) degrees
+// see http://www.movable-type.co.uk/scripts/latlong.html
+// var y = Math.sin(λ2-λ1) * Math.cos(φ2);
+// var x = Math.cos(φ1)*Math.sin(φ2) -
+//         Math.sin(φ1)*Math.cos(φ2)*Math.cos(λ2-λ1);
+// var brng = Math.atan2(y, x).toDegrees();
+
+function bearingBetween(item1: any, item2: any) {
+    if (!item1 || !item1.center || !item2 || !item2.center)
+    {
+        console.log(`bearingBetween: no place or center objects`);
+        return undefined;
+    }
+
+    let c1 = item1.center;
+    let c2 = item2.center;
+
+    let lat1 = degreesToRadians(c1.latitude);  // φ1
+    let lat2 = degreesToRadians(c2.latitude);  // φ2
+    let lon1 = degreesToRadians(c1.longitude); // λ1
+    let lon2 = degreesToRadians(c2.longitude); // λ2
+
+    let y = Math.sin(lon2-lon1) * Math.cos(lat2);
+    let x = Math.cos(lat1) * Math.sin(lat2) -
+            Math.sin(lat1) * Math.cos(lat2) * Math.cos(lon2 - lon1);
+
+    let brng = Math.atan2(y,x)
+
+    return (radiansToDegrees(brng)+360) % 360;
+}
+
 
 // Analysis functions for one arcTimeline
 export abstract class singleTimelineAnalysis {
@@ -197,8 +245,9 @@ export abstract class singleTimelineAnalysis {
                     duration: formatDuration(timelineItem.getDuration()),
                     center: timelineItem.center,
                     radius: timelineItem.radius.mean,
-                    placeCenter: timelineItem.place.center,
+                    placeCenter: (timelineItem.place ? timelineItem.place.center : undefined),
                     distance: distanceBetween(timelineItem, timelineItem.place),
+                    bearing: bearingBetween(timelineItem, timelineItem.place),
                     streetAddress: timelineItem.streetAddress,
                     activityType: timelineItem.activityType,
                     isVisit: timelineItem.isVisit
