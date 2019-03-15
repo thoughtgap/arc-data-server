@@ -100,6 +100,37 @@ function formatDuration(millisec: number) {
     return `${minutes}:${seconds}`;
 }
 
+function degreesToRadians(degrees: number) {
+    return degrees * Math.PI / 180;
+}
+
+// great circle distance between two items (either arcTimelineItem or arcPlace) in m
+// see http://www.movable-type.co.uk/scripts/latlong.html
+function distanceBetween(item1: any, item2: any) {
+    let earthRadiusM = 6371000;
+
+    if (!item1.center || !item2.center)
+    {
+        console.log(`distanceBetween: center object(s) missing`);
+        return Infinity;
+    }
+
+    let c1 = item1.center;
+    let c2 = item2.center;
+
+    let lat1 = degreesToRadians(c1.latitude);
+    let lat2 = degreesToRadians(c2.longitude);
+
+    let dLat = degreesToRadians(c2.latitude - c1.latitude);
+    let dLon = degreesToRadians(c2.longitude - c1.longitude);
+
+    var a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+            Math.sin(dLon/2) * Math.sin(dLon/2) * Math.cos(lat1) * Math.cos(lat2); 
+    var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
+
+    return earthRadiusM * c;
+}
+
 // Analysis functions for one arcTimeline
 export abstract class singleTimelineAnalysis {
 
@@ -164,6 +195,10 @@ export abstract class singleTimelineAnalysis {
                     startDate: timelineItem.startDate,
                     endDate: timelineItem.endDate,
                     duration: formatDuration(timelineItem.getDuration()),
+                    center: timelineItem.center,
+                    radius: timelineItem.radius.mean,
+                    placeCenter: timelineItem.place.center,
+                    distance: distanceBetween(timelineItem, timelineItem.place),
                     streetAddress: timelineItem.streetAddress,
                     activityType: timelineItem.activityType,
                     isVisit: timelineItem.isVisit
