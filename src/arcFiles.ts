@@ -1,12 +1,14 @@
 /* Classes for reading the json-files from disk and parsing the data */
 
 import fs = require('fs');
+import zlib = require('zlib');
 import { arcTimeline } from './arcjson';
 
 // Superclass for file directories
 export class directory {
     layerNo: number
     dirPath: string
+    nextLayerDirPath: string
 
     filenameList: string[]
     loadedFilenameList = false;
@@ -17,15 +19,24 @@ export class directory {
     loadedFileContents = false;
 
 
-    constructor(dir: string, loadOnStart: boolean = false, fileNamePattern: string) {
+    constructor(dir: string, loadOnStart: boolean = false, fileNamePattern: string, nextLayerDirPath: string = null) {
         this.dirPath = dir;
         this.fileNamePattern = fileNamePattern;
 
+        if(nextLayerDirPath) {
+            this.nextLayerDirPath = nextLayerDirPath;
+        }
+
         if (loadOnStart) {
-            console.log("Reading files on Startup");
-            this.readFiles();
+            console.log("Loading on Startup");
+            this.load();
         }
     }
+
+    public load() {
+        this.readFiles();
+    }
+
     getFilenameList(): string[] {
         if (!this.loadedFilenameList) {
             this.readFilenameList();
@@ -63,7 +74,7 @@ export class directory {
         var progress = Progress.create({ total: this.filenameList.length, pattern: 'Reading files from directory: {bar} {current}/{total} | Remaining: {remaining} | Elapsed: {elapsed} ' });
 
         this.filenameList.forEach((filename, i_file) => {
-            let file = new File(this.dirPath + "/" + filename, true);
+            let file = new File(this.dirPath + filename, true);
             returnVal.push(file);
             progress.update();
         });
@@ -78,12 +89,133 @@ export class directory {
 // Layer 1: iCloud Drive Directory
 // not implemented yet!
 export class Layer1Directory extends directory {
-    constructor(dir: string, loadOnStart: boolean = false) {
-        const fileNamePattern = '^[0-9]{4}-[0-9]{2}-[0-9]{2}\.json(\.gz)?$';
-        super(dir, loadOnStart, fileNamePattern);
+
+    constructor(dir: string, loadOnStart: boolean = false, nextLayerDirPath: string) {
+        const fileNamePattern = '^[0-9]{4}-[0-9]{2}(-[0-9]{2})?( [0-9]+)?\.json(\([0-9]+\))?(\.gz)?$';
+
+        super(dir, loadOnStart, fileNamePattern, nextLayerDirPath);
+        this.nextLayerDirPath = nextLayerDirPath; // Needed for extraction        
     }
 
-    // TODO: Link between Layer 1 and 2: extract files into layer2
+    public load() {
+        this.readFilenameList();
+        this.deduplicateFilenameList();
+        this.extractFilesToLayer2();
+    }
+
+    // Link between Layer 1 and 2: extract files into layer2
+    extractFilesToLayer2() {
+        // Check for layer 2 directory
+        if (!this.nextLayerDirPath) {
+            console.error("Cannot start extraction, nextLayerDirPath is missing!");
+            return false;
+        }
+
+        let Progress = require('ts-progress');
+        let progress = Progress.create({ total: this.filenameList.length, pattern: 'Copying/Extracting arc timeline files from iCloud Directory: {bar} {current}/{total} | Remaining: {remaining} | Elapsed: {elapsed} ' });
+
+        let counter = { skipped: 0, extracted: 0, copied: 0 };
+
+        this.filenameList.forEach(fileName => {
+
+            let sourceFile = this.dirPath + fileName;
+            let targetFile = this.nextLayerDirPath + fileName;
+
+            // Check file extension
+            let extension = fileName.replace(/^.*(\..*)$/, "$1");
+
+            if (extension == ".gz") {
+                targetFile = targetFile.slice(0, -3); // Remove the .gz
+            }
+
+
+            // TODO: Check if file exists with same date in target
+            let overwrite = true;
+
+            if (fs.existsSync(targetFile)) {
+                let sourceFileDate = new Date(fs.statSync(sourceFile).mtime);
+                let targetFileDate = new Date(fs.statSync(targetFile).mtime);
+
+                if (targetFileDate >= sourceFileDate) {
+                    overwrite = false;
+                    counter.skipped++;
+                }
+            }
+
+            if (overwrite) {
+                if (extension == ".gz") {
+
+                    let gunzip = zlib.createGunzip();
+                    let rstream = fs.createReadStream(sourceFile);
+                    let wstream = fs.createWriteStream(targetFile);
+                    rstream.pipe(gunzip).pipe(wstream);
+                    // TODO: Error handling
+
+                    counter.extracted++;
+                }
+                else if (extension == ".json") {
+                    //console.log(`Copy ${sourceFile} to ${targetFile}`);
+                    fs.copyFile(sourceFile, targetFile, (err) => {
+                        if (err) throw err;
+                    });
+
+                    counter.copied++;
+                }
+            }
+            progress.update();
+        });
+        progress.done();
+        console.log(`Copied ${counter.copied}, extracted ${counter.extracted} and skipped ${counter.skipped} files.`)
+    }
+
+    // Cleans up a filename and removes extensions and duplicate indicators
+    // e.g. 2015-08-02.json.gz      => 2015-08-02
+    //      2019-02-22 1915.json.gz => 2019-02-22
+    //      2019-02-22.json(12).gz  => 2019-02-22
+    private cleanFileName(fileName: string) {
+        return fileName.replace(/( [0-9]+)?\.json(\([0-9]+\))?(\.gz)?$/, "");
+    }
+
+    // From the complete list of Layer1 files, find the most recent files for each timespan
+    // assuming there might be duplicates like "YYYY-MM-DD [0-9]+.json([0-9]+).gz
+    private deduplicateFilenameList() {
+        let cleanFilenameList: string[] = [];
+
+        // Get an object which summarises all the different files for each cleanFileName
+        // Example: {'2019-02-12': [ '2019-02-12 2153.json.gz', '2019-02-12.json.gz' ],
+        //           '2019-02-14': [ '2019-02-14.json.gz']}
+        let uniqueTimespanFiles = {};
+        this.filenameList.map(fileName => {
+            // Get the clean filename
+            let cleanName = this.cleanFileName(fileName);
+
+            // Initialise if it doesn't exist
+            if (!uniqueTimespanFiles[cleanName]) {
+                uniqueTimespanFiles[cleanName] = [];
+            }
+            uniqueTimespanFiles[cleanName].push(fileName); // Put original filename into the array
+        });
+
+        // Get only the newest file for each timespan
+        Object.keys(uniqueTimespanFiles).forEach(key => {
+            // Keep only the newest file from the list
+            cleanFilenameList.push(this.youngestFileFromList(uniqueTimespanFiles[key]));
+        });
+
+        console.log(`Reduced ${this.filenameList.length} files to ${cleanFilenameList.length} relevant files`);
+        this.filenameList = cleanFilenameList;
+    }
+
+    // Find the most recent file from a list of files contained within the layer directory
+    private youngestFileFromList(fileList: string[]): string {
+        let youngestFile = fileList.reduce((last, current) => {
+            let currentFileDate = new Date(fs.statSync(this.dirPath + current).mtime);
+            let lastFileDate = new Date(fs.statSync(this.dirPath + last).mtime);
+            return (currentFileDate.getTime() > lastFileDate.getTime()) ? current : last;
+        });
+        //console.log("youngestFileFromList", fileList, youngestFile);
+        return youngestFile;
+    }
 }
 
 // Layer 2: Extracted Files from layer 1
@@ -98,7 +230,7 @@ export class Layer2Directory extends directory {
 
         this.parsedArcTimelines = false;
         this.arcTimelines = [];
-        if(loadOnStart) {
+        if (loadOnStart) {
             this.parseFilesToArcTimeline();
         }
     }
@@ -165,9 +297,9 @@ export class config {
     arcLayer1Dir: string
     arcLayer2Dir: string
     arcLayer2AutoLoadOnStart: boolean = false
-    
+
     configFileMine = "config/directories.mine.json"
-    configFileGit  = "config/directories.json"
+    configFileGit = "config/directories.json"
 
     configLoaded: boolean = false
 
@@ -187,8 +319,8 @@ export class config {
         console.log(`Reading JSON file ${fileFullPath}`)
         let config = JSON.parse(fs.readFileSync(fileFullPath, 'utf8'));
 
-        this.arcLayer1Dir = config.layer1.directory;
-        this.arcLayer2Dir = config.layer2.directory;
+        this.arcLayer1Dir = config.layer1.directory; // TODO: Check if this directory really exists
+        this.arcLayer2Dir = config.layer2.directory; // TODO: Check if this directory really exists too
         this.arcLayer2AutoLoadOnStart = config.layer2.autoLoadOnStart;
         this.configLoaded = true;
         return true;

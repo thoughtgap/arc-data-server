@@ -5,10 +5,8 @@ import * as arcAnalysis from './arcAnalysis'
 
 // Central classes
 const arcDirConfig = new arcFiles.config();
-const arcLayer1Dir = new arcFiles.Layer1Directory(arcDirConfig.getArcLayer1Dir());
-const arcLayer2Dir = new arcFiles.Layer2Directory(arcDirConfig.getArcLayer2Dir(),
-  arcDirConfig.getArcLayer2AutoLoadOnStart());
-
+const arcLayer1Dir = new arcFiles.Layer1Directory(arcDirConfig.getArcLayer1Dir(),false,arcDirConfig.getArcLayer2Dir());
+const arcLayer2Dir = new arcFiles.Layer2Directory(arcDirConfig.getArcLayer2Dir(),arcDirConfig.getArcLayer2AutoLoadOnStart());
 const arcClassificationPlaces = new arcClassification.Places();
 
 class App {
@@ -40,7 +38,7 @@ class App {
 
     // List Layer 1 Files
     router.get("/files/source", (req, res, next) => {
-      console.log("URL: "+req.url);
+      console.log("URL: " + req.url);
       let obj = {
         "description": "A list of all relevant files in the iCloud folder",
         "response": arcLayer1Dir.getFilenameList()
@@ -50,7 +48,7 @@ class App {
 
     // List Layer 2 Files
     router.get("/files/jsonexport", (req, res, next) => {
-      console.log("URL: "+req.url);
+      console.log("URL: " + req.url);
 
       let obj = {
         "description": "A list of all the Arc json export files.",
@@ -65,7 +63,7 @@ class App {
     // })
 
     router.get("/classifications/places", (req, res, next) => {
-      console.log("URL: "+req.url);
+      console.log("URL: " + req.url);
 
       let obj = {
         "description": "The classified places (by place.name) put into the categories",
@@ -76,69 +74,69 @@ class App {
 
 
     router.get("/visits/places/", (req, res, next) => {
-      console.log("URL: "+req.url);
+      console.log("URL: " + req.url);
 
       let filter = req.query; // Fetch the filter from the URL get parameters
-      console.log(`Using filter: `+JSON.stringify(filter))
+      console.log(`Using filter: ` + JSON.stringify(filter))
 
       let obj = {
         "description": "A list of all the places that were visited.",
-        "response": arcAnalysis.timelinesAnalysis.listPlaces(arcLayer2Dir.getArcTimelines(),filter, arcClassificationPlaces)
+        "response": arcAnalysis.timelinesAnalysis.listPlaces(arcLayer2Dir.getArcTimelines(), filter, arcClassificationPlaces)
       }
       res.json(obj);
     })
 
 
     router.get("/visits/places/unassigned", (req, res, next) => {
-      console.log("URL: "+req.url);
+      console.log("URL: " + req.url);
 
       let filter = req.query; // Fetch the filter from the URL get parameters
-      console.log(`Using filter: `+JSON.stringify(filter))
+      console.log(`Using filter: ` + JSON.stringify(filter))
 
       let obj = {
         "description": "A list of Visits with no assigned place.",
-        "response": arcAnalysis.timelinesAnalysis.visitsWithoutPlace(arcLayer2Dir.getArcTimelines(),filter, arcClassificationPlaces)
+        "response": arcAnalysis.timelinesAnalysis.visitsWithoutPlace(arcLayer2Dir.getArcTimelines(), filter, arcClassificationPlaces)
       };
       res.json(obj);
     })
 
     router.get("/activities/types", (req, res, next) => {
-      console.log("URL: "+req.url);
+      console.log("URL: " + req.url);
 
       let filter = req.query; // Fetch the filter from the URL get parameters
-      console.log(`Using filter: `+JSON.stringify(filter))
+      console.log(`Using filter: ` + JSON.stringify(filter))
 
       let obj = {
         "description": "A list of all activity types",
-        "response": arcAnalysis.timelinesAnalysis.listActivityTypes(arcLayer2Dir.getArcTimelines(),filter, arcClassificationPlaces)
+        "response": arcAnalysis.timelinesAnalysis.listActivityTypes(arcLayer2Dir.getArcTimelines(), filter, arcClassificationPlaces)
       };
       res.json(obj);
     })
 
 
     router.get("/timelineItems/timestamps", (req, res, next) => {
-      console.log("URL: "+req.url);
+      console.log("URL: " + req.url);
 
       let filter = req.query; // Fetch the filter from the URL get parameters
-      console.log(`Using filter: `+JSON.stringify(filter))
-    
+      console.log(`Using filter: ` + JSON.stringify(filter))
+
       let obj = {
         "description": "A list of timestamps (filtered)",
-        "response": arcAnalysis.timelinesAnalysis.listTimestamps(arcLayer2Dir.getArcTimelines(),filter, arcClassificationPlaces)
+        "response": arcAnalysis.timelinesAnalysis.listTimestamps(arcLayer2Dir.getArcTimelines(), filter, arcClassificationPlaces)
       };
 
       res.json(obj);
     })
 
     router.get("/timelineItems/list", (req, res, next) => {
-      console.log("URL: "+req.url);
+      console.log("URL: " + req.url);
 
       let filter = req.query; // Fetch the filter from the URL get parameters
-      console.log(`Using filter: `+JSON.stringify(filter))
-    
+      console.log(`Using filter: ` + JSON.stringify(filter))
+
       let obj = {
         "description": "A list of timelineItems (filtered)",
-        "response": arcAnalysis.timelinesAnalysis.listTimelineItems(arcLayer2Dir.getArcTimelines(),filter, arcClassificationPlaces)
+        "response": arcAnalysis.timelinesAnalysis.listTimelineItems(arcLayer2Dir.getArcTimelines(), filter, arcClassificationPlaces)
       };
 
       res.json(obj);
