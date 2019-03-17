@@ -23,9 +23,9 @@ To separate standard config file and your own values, you can copy the files fro
 
 ### File handling
 * [`/files/source/list`](http://localhost:3000/files/source/list) Lists the compressed source files (Layer 1, not really implemented yet)
-* [`/files/extract`](http://localhost:3000/files/extract) Copies/extracts the files from Layer 1 (iCloud) to Layer 2 (local directory). Checks for duplicates in the iCloud directory on the way. Server has to be restarted afterwards (to be fixed)
+* [`/files/extract`](http://localhost:3000/files/extract) Copies/extracts the files from Layer 1 (iCloud) to Layer 2 (local directory). Checks for duplicates in the iCloud directory on the way. [`/files/jsonexport/reload`](http://localhost:3000/files/jsonexport/list) needs to be called afterwards to load the new files into memory.
 * [`/files/jsonexport/list`](http://localhost:3000/files/jsonexport/list) Lists all the Arc export files (Layer 2)
-* [`/files/jsonexport/reload`](http://localhost:3000/files/jsonexport/list) Reloads the json exports from disk into memory (e.g. after `/files/extract` has run)
+* [`/files/jsonexport/reload`](http://localhost:3000/files/jsonexport/reload) Reloads the json exports from disk into memory (e.g. after `/files/extract` has run)
 
 ### Data Display / Analysis
 * [`/classifications/places`](http://localhost:3000/classifications/places) Shows the place classifications maintained in `config/locationtypes.json`
@@ -35,7 +35,7 @@ To separate standard config file and your own values, you can copy the files fro
 * [`/timelineItems/list`](http://localhost:3000/timelineItems/list) Shows a (human-readable) list of timelineItems. Can be filtered.
 * [`/timelineItems/timestamps`](http://localhost:3000/timelineItems/timestamps) Shows a list of timestamps. Can be filtered.
 
-### Filtering
+#### Filtering
 
 You can optionally filter the queried timelineItems with the following URL-Parameters:
 
