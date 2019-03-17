@@ -23,7 +23,7 @@ export class directory {
         this.dirPath = dir;
         this.fileNamePattern = fileNamePattern;
 
-        if(nextLayerDirPath) {
+        if (nextLayerDirPath) {
             this.nextLayerDirPath = nextLayerDirPath;
         }
 
@@ -99,22 +99,33 @@ export class Layer1Directory extends directory {
 
     public load() {
         this.readFilenameList();
-        this.deduplicateFilenameList();
-        this.extractFilesToLayer2();
+        let duplicateSummary = this.deduplicateFilenameList();
+        let extractSummary = this.extractFilesToLayer2();
+
+        return {
+            "fileCount": {
+                original: duplicateSummary.fileCountOriginal,
+                withoutDuplicates: duplicateSummary.fileCountWithoutDuplicates,
+                skipped: extractSummary.skipped,
+                extracted: extractSummary.extracted,
+                copied: extractSummary.copied
+            }
+        }
     }
 
     // Link between Layer 1 and 2: extract files into layer2
     extractFilesToLayer2() {
+        let counter = { skipped: 0, extracted: 0, copied: 0 };
+
         // Check for layer 2 directory
         if (!this.nextLayerDirPath) {
             console.error("Cannot start extraction, nextLayerDirPath is missing!");
-            return false;
+            counter["error"] = "Cannot start extraction, nextLayerDirPath is missing!";
+            return counter
         }
 
         let Progress = require('ts-progress');
         let progress = Progress.create({ total: this.filenameList.length, pattern: 'Copying/Extracting arc timeline files from iCloud Directory: {bar} {current}/{total} | Remaining: {remaining} | Elapsed: {elapsed} ' });
-
-        let counter = { skipped: 0, extracted: 0, copied: 0 };
 
         this.filenameList.forEach(fileName => {
 
@@ -166,6 +177,7 @@ export class Layer1Directory extends directory {
         });
         progress.done();
         console.log(`Copied ${counter.copied}, extracted ${counter.extracted} and skipped ${counter.skipped} files.`)
+        return counter;
     }
 
     // Cleans up a filename and removes extensions and duplicate indicators
@@ -202,8 +214,14 @@ export class Layer1Directory extends directory {
             cleanFilenameList.push(this.youngestFileFromList(uniqueTimespanFiles[key]));
         });
 
-        console.log(`Reduced ${this.filenameList.length} files to ${cleanFilenameList.length} relevant files`);
+        let summary = {
+            fileCountOriginal: this.filenameList.length,
+            fileCountWithoutDuplicates: cleanFilenameList.length
+        };
+
+        console.log(`Reduced ${summary.fileCountOriginal} files to ${summary.fileCountWithoutDuplicates} relevant files`);
         this.filenameList = cleanFilenameList;
+        return summary;
     }
 
     // Find the most recent file from a list of files contained within the layer directory

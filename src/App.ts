@@ -46,6 +46,16 @@ class App {
       res.json(obj);
     })
 
+    // Extract from Layer 1 (iCloud) to Layer 2
+    router.get("/files/extract", (req, res, next) => {
+      console.log("URL: " + req.url);
+      let obj = {
+        "description": "Copy/Extract the files from iCloud folder to Layer2-Folder",
+        "response": arcLayer1Dir.load()
+      }
+      res.json(obj);
+    })
+
     // List Layer 2 Files
     router.get("/files/jsonexport", (req, res, next) => {
       console.log("URL: " + req.url);
