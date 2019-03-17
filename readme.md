@@ -21,9 +21,13 @@ To separate standard config file and your own values, you can copy the files fro
 
 ## Endpoints
 
-* [`/files/source`](http://localhost:3000/files/source) Lists the compressed source files (Layer 1, not really implemented yet)
+### File handling
+* [`/files/source/list`](http://localhost:3000/files/source/list) Lists the compressed source files (Layer 1, not really implemented yet)
 * [`/files/extract`](http://localhost:3000/files/extract) Copies/extracts the files from Layer 1 (iCloud) to Layer 2 (local directory). Checks for duplicates in the iCloud directory on the way. Server has to be restarted afterwards (to be fixed)
-* [`/files/jsonexport`](http://localhost:3000/files/jsonexport) Lists all the Arc export files (Layer 2)
+* [`/files/jsonexport/list`](http://localhost:3000/files/jsonexport/list) Lists all the Arc export files (Layer 2)
+* [`/files/jsonexport/reload`](http://localhost:3000/files/jsonexport/list) Reloads the json exports from disk into memory (e.g. after `/files/extract` has run)
+
+### Data Display / Analysis
 * [`/classifications/places`](http://localhost:3000/classifications/places) Shows the place classifications maintained in `config/locationtypes.json`
 * [`/visits/places`](http://localhost:3000/visits/places) Shows a list of all the places that were visited. Can be filtered.
 * [`/visits/places/unassigned`](http://localhost:3000/visits/places/unassigned) Shows a list of visits that don't have an assigned place. Can be filtered.
@@ -73,8 +77,8 @@ You can optionally filter the queried timelineItems with the following URL-Param
 
 ### Installation
 
-* Install [Node.js](https://nodejs.org/en/).
-* cd to this directory
+* Install [Node.js](https://nodejs.org/en/)
+* `cd` to this directory
 * Install arc-data-server via `npm install`
 
 ### Run in Devmode

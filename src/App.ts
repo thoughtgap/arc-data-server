@@ -37,7 +37,7 @@ class App {
     })
 
     // List Layer 1 Files
-    router.get("/files/source", (req, res, next) => {
+    router.get("/files/source/list", (req, res, next) => {
       console.log("URL: " + req.url);
       let obj = {
         "description": "A list of all relevant files in the iCloud folder",
@@ -57,12 +57,23 @@ class App {
     })
 
     // List Layer 2 Files
-    router.get("/files/jsonexport", (req, res, next) => {
+    router.get("/files/jsonexport/list", (req, res, next) => {
       console.log("URL: " + req.url);
 
       let obj = {
         "description": "A list of all the Arc json export files.",
         "response": arcLayer2Dir.getFilenameList()
+      }
+      res.json(obj);
+    })
+
+    // Reload Layer 2 Files
+    router.get("/files/jsonexport/reload", (req, res, next) => {
+      console.log("URL: " + req.url);
+
+      let obj = {
+        "description": "Reloads all layer2 files from disk and parses them (might take a while)",
+        "response": arcLayer2Dir.reload() // TODO: Release memory from arc timeline items
       }
       res.json(obj);
     })

@@ -37,6 +37,19 @@ export class directory {
         this.readFiles();
     }
 
+    public reload() {
+        this.reset();
+        return this.load();
+    }
+
+    public reset() {
+        // Reset the files (and free up memory)
+        this.filenameList = [];
+        this.loadedFilenameList = false;
+        this.fileContentList = [];
+        this.loadedFileContents = false;
+    }
+
     getFilenameList(): string[] {
         if (!this.loadedFilenameList) {
             this.readFilenameList();
@@ -102,15 +115,25 @@ export class Layer1Directory extends directory {
         let duplicateSummary = this.deduplicateFilenameList();
         let extractSummary = this.extractFilesToLayer2();
 
-        return {
+        let summary = {
             "fileCount": {
-                original: duplicateSummary.fileCountOriginal,
-                withoutDuplicates: duplicateSummary.fileCountWithoutDuplicates,
-                skipped: extractSummary.skipped,
-                extracted: extractSummary.extracted,
-                copied: extractSummary.copied
+                source: {
+                    original: duplicateSummary.fileCountOriginal,
+                    withoutDuplicates: duplicateSummary.fileCountWithoutDuplicates
+                },
+                processed: {
+                    skipped: extractSummary.skipped,
+                    extracted: extractSummary.extracted,
+                    copied: extractSummary.copied
+                }
             }
         }
+
+        if (summary.fileCount.processed.extracted + summary.fileCount.processed.copied > 0) {
+            // TODO: Trigger reload of data from Layer2 automatically
+            summary["nextStep"] = "Reload Layer2 Data by calling /files/jsonexport/reload manually";
+        }
+        return summary;
     }
 
     // Link between Layer 1 and 2: extract files into layer2
@@ -248,9 +271,25 @@ export class Layer2Directory extends directory {
 
         this.parsedArcTimelines = false;
         this.arcTimelines = [];
-        if (loadOnStart) {
-            this.parseFilesToArcTimeline();
-        }
+        // if (loadOnStart) {
+        //     this.parseFilesToArcTimeline();
+        // }
+    }
+
+    public load() {
+        this.parsedArcTimelines = false;
+        this.arcTimelines = [];
+        return this.parseFilesToArcTimeline();
+    }
+
+    // Reset the files (and free up memory)
+    public reset() {
+        this.filenameList = [];
+        this.loadedFilenameList = false;
+        this.fileContentList = [];
+        this.loadedFileContents = false;
+        this.arcTimelines = [];
+        this.parsedArcTimelines = false;
     }
 
     // Parse file Contents to Arc Timeline Data then delete the raw content to free up memory
@@ -259,15 +298,25 @@ export class Layer2Directory extends directory {
             this.readFiles();
         }
 
-        if (this.parsedArcTimelines && this.fileContentList.length == 0) {
+        let summary = {
+            "fileCount": {
+                jsonexports: this.fileContentList.length,
+                parsedTimelines: 0
+            }
+        };
+
+        if (this.parsedArcTimelines) {
             console.log("Timelines were already parsed, content deleted. It doesn't make sense to parse again!");
+        }
+        else if (this.fileContentList.length == 0) {
+            console.log("Timelines cannot be parsed, no files have been read.");
         }
         else {
             var Progress = require('ts-progress');
             var progress = Progress.create({ total: this.filenameList.length, pattern: 'Parsing arc timeline files: {bar} {current}/{total} | Remaining: {remaining} | Elapsed: {elapsed} ' });
             for (let i = 0; i < this.fileContentList.length; i++) {
+                
                 // TODO: error handling
-
                 this.arcTimelines.push(new arcTimeline(this.fileContentList[i].fileContent));
 
                 // After parsing the data, the file contents can be deleted to free up memory
@@ -278,6 +327,9 @@ export class Layer2Directory extends directory {
             progress.done();
             this.parsedArcTimelines = true;
         }
+
+        summary.fileCount.parsedTimelines = this.arcTimelines.length;
+        return summary;
     }
 
     getArcTimelines() {
@@ -291,6 +343,8 @@ export class Layer2Directory extends directory {
     deleteFileContents() {
         this.fileContentList = [];
     }
+
+    // TODO: Method to free up arc timelines in order to free up the memory
 }
 
 // File
