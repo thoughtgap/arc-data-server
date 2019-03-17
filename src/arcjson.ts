@@ -4,6 +4,14 @@ Analysis functionality is added via arcAnalysis module to keep structure + analy
 
 import fs = require('fs');
 
+// Helper functions   
+function degreesToRadians(degrees: number) {
+    return degrees * Math.PI / 180;
+}
+function radiansToDegrees(radians: number) {
+    return radians * 180 / Math.PI;
+}
+
 // An Arc-Timeline (can be any length)
 export class arcTimeline {
     timelineItems: arcTimelineItem[]
@@ -24,30 +32,33 @@ export class arcTimeline {
 }
 
 export class arcTimelineItem {
-    itemId: String
-    nextItemId: String
-    previousItemId: String
+    itemId: string
+    nextItemId: string
+    previousItemId: string
     
     startDate: Date
     endDate: Date
     
     samples: arcSample[]
-    radius: Number
-    altitude: Number
-    center: Number
+    radius: number
+    altitude: number
+    center: {
+        longitude: number
+        latitude: number
+    }
     
-    activityType: String
-    activeEnergyBurned: Number
-    hkStepCount: Number
-    stepCount: Number
+    activityType: string
+    activeEnergyBurned: number
+    hkStepCount: number
+    stepCount: number
     
     isVisit: boolean
     
-    floorsAscended: Number
-    floorsDescended: Number
+    floorsAscended: number
+    floorsDescended: number
     
-    averageHeartRate: Number
-    maxHeartRate: Number
+    averageHeartRate: number
+    maxHeartRate: number
 
     /* Visit Fields */
     place:arcPlace
@@ -58,7 +69,7 @@ export class arcTimelineItem {
     /* Activity Fields */
     uncertainActivityType: boolean
     manualActivityType: boolean
-    activityTypeConfidenceScore: Number
+    activityTypeConfidenceScore: number
 
 
     constructor(arcTimelineItem) {
@@ -129,42 +140,114 @@ export class arcTimelineItem {
         }
         return dur;
     }
+
+
+    // Great circle distance between two items (either arcTimelineItem or arcPlace) in m
+    // see http://www.movable-type.co.uk/scripts/latlong.html
+    // var R = 6371e3; // metres
+    // var φ1 = lat1.toRadians();
+    // var φ2 = lat2.toRadians();
+    // var Δφ = (lat2-lat1).toRadians();
+    // var Δλ = (lon2-lon1).toRadians();
+
+    // var a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+    //         Math.cos(φ1) * Math.cos(φ2) *
+    //         Math.sin(Δλ/2) * Math.sin(Δλ/2);
+    // var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+
+    // var d = R * c;
+    public distanceTo(item: any): number {
+        let earthRadiusM = 6371000;
+
+        if (!this.center || !item || !item.center)
+        {
+            console.log(`distanceBetween: no place or center objects`);
+            return undefined; 
+        }
+
+        let c1 = this.center;
+        let c2 = item.center;
+
+        let lat1 = degreesToRadians(c1.latitude);
+        let lat2 = degreesToRadians(c2.latitude);
+
+        let dLat = degreesToRadians(c2.latitude - c1.latitude);
+        let dLon = degreesToRadians(c2.longitude - c1.longitude);
+
+        let a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                Math.cos(lat1) * Math.cos(lat2) *
+                Math.sin(dLon/2) * Math.sin(dLon/2); 
+        let c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
+
+        return earthRadiusM * c;
+    }
+
+    // Heading between two items (either arcTimelineItem or arcPlace) degrees
+    // see http://www.movable-type.co.uk/scripts/latlong.html
+    // var y = Math.sin(λ2-λ1) * Math.cos(φ2);
+    // var x = Math.cos(φ1)*Math.sin(φ2) -
+    //         Math.sin(φ1)*Math.cos(φ2)*Math.cos(λ2-λ1);
+    // var brng = Math.atan2(y, x).toDegrees();
+    public bearingTo(item: any): number {
+        if (!this.center || !item || !item.center)
+        {
+            console.log(`bearingBetween: no place or center objects`);
+            return undefined;
+        }
+
+        let c1 = this.center;
+        let c2 = item.center;
+
+        let lat1 = degreesToRadians(c1.latitude);  // φ1
+        let lat2 = degreesToRadians(c2.latitude);  // φ2
+        let lon1 = degreesToRadians(c1.longitude); // λ1
+        let lon2 = degreesToRadians(c2.longitude); // λ2
+
+        let y = Math.sin(lon2-lon1) * Math.cos(lat2);
+        let x = Math.cos(lat1) * Math.sin(lat2) -
+                Math.sin(lat1) * Math.cos(lat2) * Math.cos(lon2 - lon1);
+
+        let brng = Math.atan2(y,x)
+
+        return (radiansToDegrees(brng)+360) % 360;
+    }
+
 }
 
 interface arcPlace {
     placeId: String,
     radius: {
-        mean: Number
-        sd: Number
+        mean: number
+        sd: number
     }
-    isHome: Boolean
-    name: String
+    isHome: boolean
+    name: string
     center: {
-        longitude: Number
-        latitude: Number
+        longitude: number
+        latitude: number
     }
 }
 
 interface arcSample {
-    zAcceleration?: Number,
+    zAcceleration?: number,
     recordingState?: "recording",
-    secondsFromGMT?: Number // were only added recently
-    timelineItemId: String,
-    sampleId: String
+    secondsFromGMT?: number // were only added recently
+    timelineItemId: string,
+    sampleId: string
     location: {
-        verticalAccuracy: Number
-        speed: Number
-        longitude: Number
-        horizontalAccuracy: Number
-        course: Number
-        latitude: Number
+        verticalAccuracy: number
+        speed: number
+        longitude: number
+        horizontalAccuracy: number
+        course: number
+        latitude: number
         timestamp: Date
-        altitude: Number
+        altitude: number
     }
-    stepHz: Number
+    stepHz: number
     date: Date
-    movingState: String, // "stationary
-    courseVariance: Number
-    xyAcceleration: Number,
-    coreMotionActivityType: String // "walking"
+    movingState: string, // "stationary
+    courseVariance: number
+    xyAcceleration: number,
+    coreMotionActivityType: string // "walking"
 }

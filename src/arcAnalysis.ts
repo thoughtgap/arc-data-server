@@ -100,6 +100,7 @@ function formatDuration(millisec: number) {
     return `${minutes}:${seconds}`;
 }
 
+
 // Analysis functions for one arcTimeline
 export abstract class singleTimelineAnalysis {
 
@@ -164,6 +165,11 @@ export abstract class singleTimelineAnalysis {
                     startDate: timelineItem.startDate,
                     endDate: timelineItem.endDate,
                     duration: formatDuration(timelineItem.getDuration()),
+                    center: timelineItem.center,
+                    radius: timelineItem.radius.mean,
+                    placeCenter: (timelineItem.place ? timelineItem.place.center : undefined),
+                    distance: timelineItem.distanceTo(timelineItem.place),
+                    bearing: timelineItem.bearingTo(timelineItem.place),
                     streetAddress: timelineItem.streetAddress,
                     activityType: timelineItem.activityType,
                     isVisit: timelineItem.isVisit
