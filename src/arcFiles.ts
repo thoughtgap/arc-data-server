@@ -268,12 +268,6 @@ export class Layer2Directory extends directory {
         const fileNamePattern = '^[0-9]{4}-[0-9]{2}(-[0-9]{2})?\.json$';
 
         super(dir, loadOnStart, fileNamePattern);
-
-        this.parsedArcTimelines = false;
-        this.arcTimelines = [];
-        // if (loadOnStart) {
-        //     this.parseFilesToArcTimeline();
-        // }
     }
 
     public load() {
@@ -325,9 +319,8 @@ export class Layer2Directory extends directory {
                 progress.update();
             }
             progress.done();
-            this.parsedArcTimelines = true;
         }
-
+        this.parsedArcTimelines = true;
         summary.fileCount.parsedTimelines = this.arcTimelines.length;
         return summary;
     }
