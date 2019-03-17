@@ -6,7 +6,6 @@ The json-exports are accessed and staged through multiple layers:
 
 1. iCloud Directory (if available) with compressed export files
 1. Extracted json files for direct read (accepts only `yyyy-mm-dd.json` and `yyyy-mm.json`)
-1. Enriched Data (details to follow)
 
 The intention is to provide a base for further analysis of the data.
 
@@ -17,14 +16,17 @@ The intention is to provide a base for further analysis of the data.
   * `layer2`: Local directory (defaults to `arc-data/jsonexport`), containing uncompressed json files
 * `config/locationtypes.mine.json` / `config/locationtypes.json` This file is used for determining workplaces and home locations (in order to analyse commutes). It references Arc places by the `place.name` attribute.
 
-To separate standard config file and your own values, you can copy the files from `<configfile>.json` to `<configfile>.mine.json`. The `.mine`-file will be read preferrably. Their changes will not be tracked to Git.
+To separate standard config file and your own values, you can copy the files from `<configfile>.json` to `<configfile>.mine.json`. The `.mine`-file will be read preferrably. Their changes will not be tracked to github.
+
+It is advised to set the setting `layer2.autoLoadOnStart = true` so the timeline files from Layer 2 are read from disk on server startup. If the setting is set to false, the files will be read on first data query and will delay response time.
 
 ## Endpoints
 
 ### File handling
 
-* [`/files/source/list`](http://localhost:3000/files/source/list) Lists the compressed source files (Layer 1, not really implemented yet)
+* [`/files/source/list`](http://localhost:3000/files/source/list) Lists the compressed source files (Layer 1)
 * [`/files/extract`](http://localhost:3000/files/extract) Copies/extracts the files from Layer 1 (iCloud) to Layer 2 (local directory). Checks for duplicates in the iCloud directory on the way. [`/files/jsonexport/reload`](http://localhost:3000/files/jsonexport/list) needs to be called afterwards to load the new files into memory.
+
 * [`/files/jsonexport/list`](http://localhost:3000/files/jsonexport/list) Lists all the Arc export files (Layer 2)
 * [`/files/jsonexport/reload`](http://localhost:3000/files/jsonexport/reload) Reloads the json exports from disk into memory (e.g. after `/files/extract` has run)
 
