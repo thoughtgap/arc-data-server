@@ -4,7 +4,7 @@ An http interface for exported json-files from [BigPaua's Arc App](https://www.b
 
 The json-exports are accessed and staged through multiple layers:
 
-1. iCloud Directory (if available) with compressed export files (--> Not implemented yet!)
+1. iCloud Directory (if available) with compressed export files
 1. Extracted json files for direct read (accepts only `yyyy-mm-dd.json` and `yyyy-mm.json`)
 1. Enriched Data (details to follow)
 
@@ -22,12 +22,14 @@ To separate standard config file and your own values, you can copy the files fro
 ## Endpoints
 
 ### File handling
+
 * [`/files/source/list`](http://localhost:3000/files/source/list) Lists the compressed source files (Layer 1, not really implemented yet)
 * [`/files/extract`](http://localhost:3000/files/extract) Copies/extracts the files from Layer 1 (iCloud) to Layer 2 (local directory). Checks for duplicates in the iCloud directory on the way. [`/files/jsonexport/reload`](http://localhost:3000/files/jsonexport/list) needs to be called afterwards to load the new files into memory.
 * [`/files/jsonexport/list`](http://localhost:3000/files/jsonexport/list) Lists all the Arc export files (Layer 2)
 * [`/files/jsonexport/reload`](http://localhost:3000/files/jsonexport/reload) Reloads the json exports from disk into memory (e.g. after `/files/extract` has run)
 
 ### Data Display / Analysis
+
 * [`/classifications/places`](http://localhost:3000/classifications/places) Shows the place classifications maintained in `config/locationtypes.json`
 * [`/visits/places`](http://localhost:3000/visits/places) Shows a list of all the places that were visited. Can be filtered.
 * [`/visits/places/unassigned`](http://localhost:3000/visits/places/unassigned) Shows a list of visits that don't have an assigned place. Can be filtered.
@@ -65,7 +67,7 @@ You can optionally filter the queried timelineItems with the following URL-Param
   * `placeUnassigned=1` Only show items with unassigned place
   * Examples:
     * Timeline items at work locations: [`/timelineItems/list?placeClass=work`](http://localhost:3000/timelineItems/list?placeClass=work)
-    * Timeline items at "Mom and Dads": [`/timelineItems/list?place=Mom and Dads`](http://localhost:3000/timelineItems/list?place=Mom and Dads)
+    * Timeline items at "Mom and Dads": [`/timelineItems/list?place=Mom and Dads`](http://localhost:3000/timelineItems/list?place=Mom%20and%20Dads)
     * Visits without assigned place: [`/timelineItems/list?placeUnassigned=1&type=visits`](http://localhost:3000/timelineItems/list?placeUnassigned=1&type=visits), same as [`/visits/places/unassigned`](http://localhost:3000/visits/places/unassigned)
 * Route (e.g. commute) Filters
   * `placeFrom=Bakery,Café` A (comma-separated) list of exact match place names
@@ -84,8 +86,3 @@ You can optionally filter the queried timelineItems with the following URL-Param
 ### Run in Devmode
 
 * `npm run dev`
-
-## Notes
-
-1. The current version of arc-data-server reads uncompressed Arc json-files from a local directory (`layer2` in `config/directories.json`). To get started, extract the Arc YYYY-MM-DD.json.gz files to that location.
-2. arc-data-server does not currently monitor changes to the input files, to reload, restart the server.
