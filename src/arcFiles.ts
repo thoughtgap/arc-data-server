@@ -1,6 +1,7 @@
 /* Classes for reading the json-files from disk and parsing the data */
 
 import fs = require('fs');
+import path = require('path');
 import zlib = require('zlib');
 import { arcTimeline } from './arcjson';
 
@@ -87,7 +88,7 @@ export class directory {
         var progress = Progress.create({ total: this.filenameList.length, pattern: 'Reading files from directory: {bar} {current}/{total} | Remaining: {remaining} | Elapsed: {elapsed} ' });
 
         this.filenameList.forEach((filename, i_file) => {
-            let file = new File(this.dirPath + filename, true);
+            let file = new File(path.join(this.dirPath, filename), true);
             returnVal.push(file);
             progress.update();
         });
@@ -152,15 +153,13 @@ export class Layer1Directory extends directory {
 
         this.filenameList.forEach(fileName => {
 
-            let sourceFile = this.dirPath + fileName;
-            let targetFile = this.nextLayerDirPath + fileName;
+            let sourceFile = path.join(this.dirPath, fileName);
+            // get cleaned.up target filename (only YYYY-MM-DD.json)
+            let targetFile = path.join(this.nextLayerDirPath, this.cleanFileName(fileName)+".json");
 
             // Check file extension
             let extension = fileName.replace(/^.*(\..*)$/, "$1");
 
-            if (extension == ".gz") {
-                targetFile = targetFile.slice(0, -3); // Remove the .gz
-            }
 
 
             // TODO: Check if file exists with same date in target
@@ -250,8 +249,8 @@ export class Layer1Directory extends directory {
     // Find the most recent file from a list of files contained within the layer directory
     private youngestFileFromList(fileList: string[]): string {
         let youngestFile = fileList.reduce((last, current) => {
-            let currentFileDate = new Date(fs.statSync(this.dirPath + current).mtime);
-            let lastFileDate = new Date(fs.statSync(this.dirPath + last).mtime);
+            let currentFileDate = new Date(fs.statSync(path.join(this.dirPath, current)).mtime);
+            let lastFileDate = new Date(fs.statSync(path.join(this.dirPath + last)).mtime);
             return (currentFileDate.getTime() > lastFileDate.getTime()) ? current : last;
         });
         //console.log("youngestFileFromList", fileList, youngestFile);
@@ -308,7 +307,7 @@ export class Layer2Directory extends directory {
         else {
             var Progress = require('ts-progress');
             var progress = Progress.create({ total: this.filenameList.length, pattern: 'Parsing arc timeline files: {bar} {current}/{total} | Remaining: {remaining} | Elapsed: {elapsed} ' });
-            for (let i = 0; i < this.fileContentList.length; i++) {
+            for (let i =    0; i < this.fileContentList.length; i++) {
                 
                 // TODO: error handling
                 this.arcTimelines.push(new arcTimeline(this.fileContentList[i].fileContent));
