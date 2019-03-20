@@ -161,7 +161,7 @@ export class arcTimelineItem {
 
         if (!this.center || !item || !item.center)
         {
-            console.log(`distanceBetween: no place or center objects`);
+            //console.log(`distanceBetween: no place or center objects`);
             return undefined; 
         }
 
@@ -191,7 +191,7 @@ export class arcTimelineItem {
     public bearingTo(item: any): number {
         if (!this.center || !item || !item.center)
         {
-            console.log(`bearingBetween: no place or center objects`);
+            //console.log(`bearingBetween: no place or center objects`);
             return undefined;
         }
 
