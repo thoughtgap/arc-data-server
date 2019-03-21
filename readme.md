@@ -30,6 +30,8 @@ It is advised to set the setting `layer2.autoLoadOnStart = true` so the timeline
 * [`/files/jsonexport/list`](http://localhost:3000/files/jsonexport/list) Lists all the Arc export files (Layer 2)
 * [`/files/jsonexport/reload`](http://localhost:3000/files/jsonexport/reload) Reloads the json exports from disk into memory (e.g. after `/files/extract` has run)
 
+* [`/files/status`](http://localhost:3000/files/status) Returns a status of Layer 1, Layer 2, and the classifications (last loading times, file count)
+
 ### Data Display / Analysis
 
 * [`/classifications/places`](http://localhost:3000/classifications/places) Shows the place classifications maintained in `config/locationtypes.json`

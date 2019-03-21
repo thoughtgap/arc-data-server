@@ -5,8 +5,8 @@ import * as arcAnalysis from './arcAnalysis'
 
 // Central classes
 const arcDirConfig = new arcFiles.config();
-const arcLayer1Dir = new arcFiles.Layer1Directory(arcDirConfig.getArcLayer1Dir(),false,arcDirConfig.getArcLayer2Dir());
-const arcLayer2Dir = new arcFiles.Layer2Directory(arcDirConfig.getArcLayer2Dir(),arcDirConfig.getArcLayer2AutoLoadOnStart());
+const arcLayer1Dir = new arcFiles.Layer1Directory(arcDirConfig.getArcLayer1Dir(), false, arcDirConfig.getArcLayer2Dir());
+const arcLayer2Dir = new arcFiles.Layer2Directory(arcDirConfig.getArcLayer2Dir(), arcDirConfig.getArcLayer2AutoLoadOnStart());
 const arcClassificationPlaces = new arcClassification.Places();
 
 class App {
@@ -52,6 +52,20 @@ class App {
       let obj = {
         "description": "Copy/Extract the files from iCloud folder to Layer2-Folder",
         "response": arcLayer1Dir.load()
+      }
+      res.json(obj);
+    })
+
+    // Extract from Layer 1 (iCloud) to Layer 2
+    router.get("/files/status", (req, res, next) => {
+      console.log("URL: " + req.url);
+      let obj = {
+        "description": "Status of Layer 1 and 2 files",
+        "response": {
+          "layer1": arcLayer1Dir.status,
+          "layer2": arcLayer2Dir.status,
+          "classifications": arcClassificationPlaces.status
+        }
       }
       res.json(obj);
     })

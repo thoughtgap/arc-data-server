@@ -19,13 +19,18 @@ export class directory {
     fileContentList: File[]
     loadedFileContents = false;
 
+    public status: any;
 
-    constructor(dir: string, loadOnStart: boolean = false, fileNamePattern: string, nextLayerDirPath: string = null) {
+    constructor(dir: string, loadOnStart: boolean = false, fileNamePattern: string, nextLayerDirPath: string = null, status = null) {
         this.dirPath = dir;
         this.fileNamePattern = fileNamePattern;
 
         if (nextLayerDirPath) {
             this.nextLayerDirPath = nextLayerDirPath;
+        }
+
+        if (status) {
+            this.status = status;
         }
 
         if (loadOnStart) {
@@ -107,7 +112,22 @@ export class Layer1Directory extends directory {
     constructor(dir: string, loadOnStart: boolean = false, nextLayerDirPath: string) {
         const fileNamePattern = '^[0-9]{4}-[0-9]{2}(-[0-9]{2})?( [0-9]+)?\.json(\([0-9]+\))?(\.gz)?$';
 
-        super(dir, loadOnStart, fileNamePattern, nextLayerDirPath);
+        const status = {
+            "extract_timestamp": null,
+            "fileCount": {
+                source: {
+                    original: null,
+                    withoutDuplicates: null
+                },
+                processed: {
+                    skipped: null,
+                    extracted: null,
+                    copied: null
+                }
+            }
+        };
+
+        super(dir, loadOnStart, fileNamePattern, nextLayerDirPath, status);
         this.nextLayerDirPath = nextLayerDirPath; // Needed for extraction        
     }
 
@@ -117,6 +137,7 @@ export class Layer1Directory extends directory {
         let extractSummary = this.extractFilesToLayer2();
 
         let summary = {
+            "extract_timestamp": new Date(),
             "fileCount": {
                 source: {
                     original: duplicateSummary.fileCountOriginal,
@@ -129,11 +150,13 @@ export class Layer1Directory extends directory {
                 }
             }
         }
+        this.status = summary; // Persist the status
 
         if (summary.fileCount.processed.extracted + summary.fileCount.processed.copied > 0) {
             // TODO: Trigger reload of data from Layer2 automatically
             summary["nextStep"] = "Reload Layer2 Data by calling /files/jsonexport/reload manually";
         }
+
         return summary;
     }
 
@@ -155,7 +178,7 @@ export class Layer1Directory extends directory {
 
             let sourceFile = path.join(this.dirPath, fileName);
             // get cleaned.up target filename (only YYYY-MM-DD.json)
-            let targetFile = path.join(this.nextLayerDirPath, this.cleanFileName(fileName)+".json");
+            let targetFile = path.join(this.nextLayerDirPath, this.cleanFileName(fileName) + ".json");
 
             // Check file extension
             let extension = fileName.replace(/^.*(\..*)$/, "$1");
@@ -266,7 +289,14 @@ export class Layer2Directory extends directory {
     constructor(dir: string, loadOnStart: boolean = false) {
         const fileNamePattern = '^[0-9]{4}-[0-9]{2}(-[0-9]{2})?\.json$';
 
-        super(dir, loadOnStart, fileNamePattern);
+        const status = {
+            "fileCount": {
+                jsonexports: null,
+                parsedTimelines: 0
+            }
+        }
+
+        super(dir, loadOnStart, fileNamePattern, null, status);
     }
 
     public load() {
@@ -295,7 +325,8 @@ export class Layer2Directory extends directory {
             "fileCount": {
                 jsonexports: this.fileContentList.length,
                 parsedTimelines: 0
-            }
+            },
+            load_timestamp: null
         };
 
         if (this.parsedArcTimelines) {
@@ -307,8 +338,8 @@ export class Layer2Directory extends directory {
         else {
             var Progress = require('ts-progress');
             var progress = Progress.create({ total: this.filenameList.length, pattern: 'Parsing arc timeline files: {bar} {current}/{total} | Remaining: {remaining} | Elapsed: {elapsed} ' });
-            for (let i =    0; i < this.fileContentList.length; i++) {
-                
+            for (let i = 0; i < this.fileContentList.length; i++) {
+
                 // TODO: error handling
                 this.arcTimelines.push(new arcTimeline(this.fileContentList[i].fileContent));
 
@@ -321,6 +352,9 @@ export class Layer2Directory extends directory {
         }
         this.parsedArcTimelines = true;
         summary.fileCount.parsedTimelines = this.arcTimelines.length;
+        summary.load_timestamp = new Date();
+
+        this.status = summary; // Persist the status
         return summary;
     }
 
