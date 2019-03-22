@@ -79,7 +79,7 @@ You can optionally filter the queried timelineItems with the following URL-Param
   * `placeTo=Supermarket` A (comma-separated) list of exact match place names
   * `placeToClass=work` A place classification, maintained in `config/classifications.json`
 * Field filters for `timelineItems/list`
-* `fields=startDate,duration` A (comma-separated) list of the desired fields. Possibilities are [listed in the wiki](https://github.com/thoughtgap/arc-data-server/wiki/Filterable-fields-for--timelineItems-list).
+  * `fields=startDate,duration` A (comma-separated) list of the desired fields. Possibilities are [listed in the wiki](https://github.com/thoughtgap/arc-data-server/wiki/Filterable-fields-for--timelineItems-list).
 
 ## Commands
 
