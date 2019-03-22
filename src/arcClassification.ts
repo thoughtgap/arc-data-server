@@ -17,8 +17,8 @@ export class Places {
     };
 
     loadClassification(): boolean {
-        let fileFullPathMine = "config/locationtypes.mine.json"; // The locally modified version, prefered
-        let fileFullPathGit = "config/locationtypes.json";          // The github version, fallback
+        let fileFullPathMine = "config/classifications.mine.json"; // The locally modified version, prefered
+        let fileFullPathGit = "config/classifications.json";       // The github version, fallback
         let fileFullPath = "";
 
         if (fs.existsSync(fileFullPathMine)) {
@@ -41,8 +41,8 @@ export class Places {
         return true;
     }
 
-    getClassifications(): object {
-        if (!this.classificationLoaded) {
+    getClassifications(reload:boolean = false): object {
+        if (!this.classificationLoaded || reload) {
             this.loadClassification();
         }
         return this.classification;

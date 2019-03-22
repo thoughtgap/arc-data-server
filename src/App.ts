@@ -107,6 +107,16 @@ class App {
       res.json(obj);
     })
 
+    router.get("/classifications/reload", (req, res, next) => {
+      console.log("URL: " + req.url);
+
+      let obj = {
+        "description": "The classified places (by place.name) put into the categories",
+        "response": arcClassificationPlaces.getClassifications(true)
+      }
+      res.json(obj);
+    })
+
 
     router.get("/visits/places/", (req, res, next) => {
       console.log("URL: " + req.url);
