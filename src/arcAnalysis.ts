@@ -287,27 +287,27 @@ type filterWeekdayStr = "Mo" | "Tu" | "We" | "Th" | "Fr" | "Sa" | "Su";
 interface filterObj {
     type?: filterType[]
     weekday?: filterWeekdayStr[],
-    weekdayBool?: Boolean[],
+    weekdayBool?: boolean[],
     from?: Date,
     to?: Date,
-    activityType?: String[] // TODO: Restrict to Arc Activity types?
+    activityType?: string[] // TODO: Restrict to Arc Activity types?
     duration?: {
-        from?: Number,
-        to?: Number
+        from?: number,
+        to?: number
     },
     place?: {
-        class?: String,
-        names?: String[],
-        unassigned?: Boolean,
+        class?: string,
+        names?: string[],
+        unassigned?: boolean,
         from?: {
-            names?: String[],
-            class?: String
+            names?: string[],
+            class?: string
         },
         to?: {
-            names?: String[],
-            class?: String
+            names?: string[],
+            class?: string
         }
-    }
+    },
 }
 
 class timelineFilter {
