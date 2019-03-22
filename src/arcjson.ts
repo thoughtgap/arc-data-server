@@ -35,10 +35,10 @@ export class arcTimelineItem {
     itemId: string
     nextItemId: string
     previousItemId: string
-    
+
     startDate: Date
     endDate: Date
-    
+
     samples: arcSample[]
     radius: number
     altitude: number
@@ -46,22 +46,22 @@ export class arcTimelineItem {
         longitude: number
         latitude: number
     }
-    
+
     activityType: string
     activeEnergyBurned: number
     hkStepCount: number
     stepCount: number
-    
+
     isVisit: boolean
-    
+
     floorsAscended: number
     floorsDescended: number
-    
+
     averageHeartRate: number
     maxHeartRate: number
 
     /* Visit Fields */
-    place:arcPlace
+    place: arcPlace
     streetAddress: string
     manualPlace: boolean
     placeId: string
@@ -79,35 +79,35 @@ export class arcTimelineItem {
 
         // Parse old timestamp format (pre <09.2018), timestamp from 2001-01-01
         // Convert to unix timestamp from 1970-01-01
-        if(typeof arcTimelineItem.startDate == 'number') {
+        if (typeof arcTimelineItem.startDate == 'number') {
             arcTimelineItem.startDate = (arcTimelineItem.startDate + 978307200).toFixed(0) * 1000;
         }
-        if(typeof arcTimelineItem.endDate == 'number') {
+        if (typeof arcTimelineItem.endDate == 'number') {
             arcTimelineItem.endDate = (arcTimelineItem.endDate + 978307200).toFixed(0) * 1000;
         }
 
         this.startDate = new Date(arcTimelineItem.startDate);
         this.endDate = new Date(arcTimelineItem.endDate);
-        
+
         this.samples = arcTimelineItem.samples;
         this.radius = arcTimelineItem.radius;
         this.altitude = arcTimelineItem.altitude;
         this.center = arcTimelineItem.center;
-        
+
         this.activityType = arcTimelineItem.activityType;
         this.activeEnergyBurned = arcTimelineItem.activeEnergyBurned;
         this.hkStepCount = arcTimelineItem.hkStepCount;
         this.stepCount = arcTimelineItem.stepCount;
-        
+
         this.isVisit = arcTimelineItem.isVisit;
-        
+
         this.floorsAscended = arcTimelineItem.floorsAscended;
         this.floorsDescended = arcTimelineItem.floorsDescended;
-        
+
         this.averageHeartRate = arcTimelineItem.averageHeartRate;
         this.maxHeartRate = arcTimelineItem.maxHeartRate;
 
-        if(this.isVisit) {
+        if (this.isVisit) {
             /* Visit fields */
             this.place = arcTimelineItem.place;
             this.streetAddress = arcTimelineItem.streetAddress;
@@ -122,20 +122,19 @@ export class arcTimelineItem {
         }
     }
 
-    // Return duration in minutes
-    public getDuration(format:String="ms"): number {
+    public getDuration(format: string = "ms"): number {
         let dur = this.endDate.getTime() - this.startDate.getTime();
 
-        if(format == "ms") {
+        if (format == "ms") {
             return dur;
         }
         else if (format == "s") {
             return dur / 1000; // Seconds
         }
-        else if(format == "m") {
+        else if (format == "m") {
             return dur / 1000 / 60; // Minutes
         }
-        else if(format == "h") {
+        else if (format == "h") {
             return dur / 1000 / 60 / 60; // Hours
         }
         return dur;
@@ -159,10 +158,9 @@ export class arcTimelineItem {
     public distanceTo(item: any): number {
         let earthRadiusM = 6371000;
 
-        if (!this.center || !item || !item.center)
-        {
+        if (!this.center || !item || !item.center) {
             //console.log(`distanceBetween: no place or center objects`);
-            return undefined; 
+            return undefined;
         }
 
         let c1 = this.center;
@@ -174,10 +172,10 @@ export class arcTimelineItem {
         let dLat = degreesToRadians(c2.latitude - c1.latitude);
         let dLon = degreesToRadians(c2.longitude - c1.longitude);
 
-        let a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-                Math.cos(lat1) * Math.cos(lat2) *
-                Math.sin(dLon/2) * Math.sin(dLon/2); 
-        let c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
+        let a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(lat1) * Math.cos(lat2) *
+            Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        let c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
         return earthRadiusM * c;
     }
@@ -189,8 +187,7 @@ export class arcTimelineItem {
     //         Math.sin(φ1)*Math.cos(φ2)*Math.cos(λ2-λ1);
     // var brng = Math.atan2(y, x).toDegrees();
     public bearingTo(item: any): number {
-        if (!this.center || !item || !item.center)
-        {
+        if (!this.center || !item || !item.center) {
             //console.log(`bearingBetween: no place or center objects`);
             return undefined;
         }
@@ -203,19 +200,71 @@ export class arcTimelineItem {
         let lon1 = degreesToRadians(c1.longitude); // λ1
         let lon2 = degreesToRadians(c2.longitude); // λ2
 
-        let y = Math.sin(lon2-lon1) * Math.cos(lat2);
+        let y = Math.sin(lon2 - lon1) * Math.cos(lat2);
         let x = Math.cos(lat1) * Math.sin(lat2) -
-                Math.sin(lat1) * Math.cos(lat2) * Math.cos(lon2 - lon1);
+            Math.sin(lat1) * Math.cos(lat2) * Math.cos(lon2 - lon1);
 
-        let brng = Math.atan2(y,x)
+        let brng = Math.atan2(y, x)
 
-        return (radiansToDegrees(brng)+360) % 360;
+        return (radiansToDegrees(brng) + 360) % 360;
     }
 
+    // Return only specific fields
+    public getFields(fields: string[]): Object {
+        
+        if (fields.length < 1) {
+            // A cheeky standard selection of fields
+            fields = [
+                "startDate",
+                "endDate",
+                "duration",
+                "center",
+                "radius",
+                "placeCenter",
+                "distanceToPlace",
+                "bearingToPlace",
+                "streetAddress",
+                "activityType",
+                "isVisit",
+            ];
+        }
+
+        let returnObj = {};
+
+        fields.forEach(field => {
+            // For all directly assigned fields, return the value if it exists
+            if (this[field] !== undefined) {
+                returnObj[field] = this[field];
+            }
+            // Or do it manually
+            else {
+                // Nested fields
+                if (field.substr(0, 7) == "center.") {
+                    returnObj["center"] = {}
+                    if (field == "center.longitude") {
+                        returnObj["center"]["longitude"] = this.center.longitude;
+                    }
+                    if (field == "this.center.latitude") {
+                        returnObj["center"]["latitude"] = this.center.latitude;
+                    }
+                }
+                else if(field == "duration") {
+                    returnObj["duration"] = this.getDuration();
+                }
+                else if(field == "distanceToPlace") {
+                    returnObj["distanceToPlace"] = this.distanceTo(this.place)
+                }
+                else if(field == "bearingToPlace") {
+                    returnObj["bearingToPlace"] = this.bearingTo(this.place)
+                }
+            }
+        });
+        return returnObj;
+    }
 }
 
 interface arcPlace {
-    placeId: String,
+    placeId: string,
     radius: {
         mean: number
         sd: number

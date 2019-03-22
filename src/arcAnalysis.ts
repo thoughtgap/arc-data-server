@@ -161,18 +161,14 @@ export abstract class singleTimelineAnalysis {
 
         return this.itemFilter(timeline, timelineFilter)
             .map(timelineItem => {                             // Return only some fields
-                return {
-                    startDate: timelineItem.startDate,
-                    endDate: timelineItem.endDate,
-                    duration: formatDuration(timelineItem.getDuration()),
-                    center: timelineItem.center,
-                    radius: timelineItem.radius.mean,
-                    placeCenter: (timelineItem.place ? timelineItem.place.center : undefined),
-                    distance: timelineItem.distanceTo(timelineItem.place),
-                    bearing: timelineItem.bearingTo(timelineItem.place),
-                    streetAddress: timelineItem.streetAddress,
-                    activityType: timelineItem.activityType,
-                    isVisit: timelineItem.isVisit
+                // Beautification for duration by applying another function
+                if(timelineFilter.filterObj.fields.includes("durationHuman")) {
+                    let returnObj = timelineItem.getFields(timelineFilter.filterObj.fields);
+                    returnObj["durationHuman"] = formatDuration(timelineItem.getDuration())
+                    return returnObj;
+                }
+                else {
+                    return timelineItem.getFields(timelineFilter.filterObj.fields);
                 }
             });
     }
@@ -308,6 +304,7 @@ interface filterObj {
             class?: string
         }
     },
+    fields?: string[]
 }
 
 class timelineFilter {
@@ -317,13 +314,14 @@ class timelineFilter {
 
     constructor(filter, arcClassificationPlaces) {
         this.filterObj = {};
-
         this.create(filter, arcClassificationPlaces);
     }
 
     public create(filter, arcClassificationPlaces): filterObj {
         // Creates a "clean" timelineFilter-Object from the input Object
         let filterObj: filterObj = {};
+
+        filterObj.fields = this.parseArrayOrSeparatedString(filter.fields);
 
         filterObj.type = [];
         if (filter.type !== undefined) {
@@ -467,5 +465,22 @@ class timelineFilter {
 
         this.filterObj = filterObj;
         return filterObj;
+    }
+
+    // Converts a (comma separated) string to an array, waves through an array
+    // Returns at least an empty array if input is invalid
+    private parseArrayOrSeparatedString(arrayOrSeparatedString: string | string[]): string[] {
+        let returnArr: string[] = [];
+        if(arrayOrSeparatedString !== undefined) {
+            // Check if input value is already an array, in this case just hand over
+            if (Array.isArray(arrayOrSeparatedString)) {
+                return arrayOrSeparatedString;
+            }
+            // Or a comma-separated String...
+            else if (typeof arrayOrSeparatedString == "string") {
+                returnArr = arrayOrSeparatedString.split(",");
+            }
+        }
+        return returnArr;
     }
 }
