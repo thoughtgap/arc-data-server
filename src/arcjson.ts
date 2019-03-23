@@ -49,7 +49,6 @@ export class arcTimelineItem {
 
     activityType: string
     activeEnergyBurned: number
-    hkStepCount: number
     stepCount: number
 
     isVisit: boolean
@@ -96,7 +95,6 @@ export class arcTimelineItem {
 
         this.activityType = arcTimelineItem.activityType;
         this.activeEnergyBurned = arcTimelineItem.activeEnergyBurned;
-        this.hkStepCount = arcTimelineItem.hkStepCount;
         this.stepCount = arcTimelineItem.stepCount;
 
         this.isVisit = arcTimelineItem.isVisit;
