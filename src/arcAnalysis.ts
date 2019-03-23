@@ -162,7 +162,7 @@ export abstract class singleTimelineAnalysis {
         return this.itemFilter(timeline, timelineFilter)
             .map(timelineItem => {                             // Return only some fields
                 // Beautification for duration by applying another function
-                if(timelineFilter.filterObj.fields.includes("durationHuman")) {
+                if (timelineFilter.filterObj.fields.includes("durationHuman")) {
                     let returnObj = timelineItem.getFields(timelineFilter.filterObj.fields);
                     returnObj["durationHuman"] = formatDuration(timelineItem.getDuration())
                     return returnObj;
@@ -247,11 +247,11 @@ export abstract class singleTimelineAnalysis {
             }
 
             // Route Filter
-            
+
             // Check previous timelineItem for the desired place(s)
             if (filter.place.from.names.length > 0) {
-                if(timeline.timelineItems[i_timelineItem-1]) {
-                    let previous_timelineItem = timeline.timelineItems[i_timelineItem-1]
+                if (timeline.timelineItems[i_timelineItem - 1]) {
+                    let previous_timelineItem = timeline.timelineItems[i_timelineItem - 1]
 
                     if (!previous_timelineItem || !previous_timelineItem.place || !filter.place.from.names.includes(previous_timelineItem.place.name)) {
                         return false;
@@ -261,15 +261,15 @@ export abstract class singleTimelineAnalysis {
 
             // Check next timelineItem for the desired place(s)
             if (filter.place.to.names.length > 0) {
-                if(timeline.timelineItems[i_timelineItem+1]) {
-                    let previous_timelineItem = timeline.timelineItems[i_timelineItem+1]
+                if (timeline.timelineItems[i_timelineItem + 1]) {
+                    let previous_timelineItem = timeline.timelineItems[i_timelineItem + 1]
 
                     if (!previous_timelineItem || !previous_timelineItem.place || !filter.place.to.names.includes(previous_timelineItem.place.name)) {
                         return false;
                     }
                 }
             }
-            
+
             return true;
         });
     }
@@ -322,31 +322,13 @@ class timelineFilter {
         let filterObj: filterObj = {};
 
         filterObj.fields = this.parseArrayOrSeparatedString(filter.fields);
+        filterObj.type = this.parseArrayOrSeparatedString(filter.type) as filterType[];
 
-        filterObj.type = [];
-        if (filter.type !== undefined) {
-            // Check if input value is already an array, in this case just hand over
-            if (Array.isArray(filter.type)) {
-                filterObj.type = filter.type;
-            }
-            // Or a comma-separated String...
-            else if (typeof filter.type == "string") {
-                filterObj.type = filter.type.split(",");
-            }
-        }
+
+
 
         // Weekday Filter
-        filterObj.weekday = [];
-        if (filter.weekday !== undefined) {
-            // Check if input value is already an array, in this case just hand over
-            if (Array.isArray(filter.weekday)) {
-                filterObj.weekday = filter.weekday;
-            }
-            // Or a comma-separated String...
-            else if (typeof filter.weekday == "string") {
-                filterObj.weekday = filter.weekday.split(",");
-            }
-        }
+        filterObj.weekday = this.parseArrayOrSeparatedString(filter.weekday) as filterWeekdayStr[];
         if (filterObj.weekday.length > 0) {
             // In:  Array of weekday strings (first two letters)
             //      ["Mo","Tu"]
@@ -374,17 +356,7 @@ class timelineFilter {
         }
 
         // Activity Type Filter
-        filterObj.activityType = [];
-        if (filter.activityType !== undefined) {
-            // Check if input value is already an array, in this case just hand over
-            if (Array.isArray(filter.activityType)) {
-                filterObj.activityType = filter.activityType;
-            }
-            // Or a comma-separated String...
-            else if (typeof filter.activityType == "string") {
-                filterObj.activityType = filter.activityType.split(",");
-            }
-        }
+        filterObj.activityType = this.parseArrayOrSeparatedString(filter.activityType);
 
         // Duration Filter &duration_from=60 &duration_to=120
         filterObj.duration = { from: null, to: null };
@@ -417,25 +389,25 @@ class timelineFilter {
                 class: null
             }
         };
-        
+
         // &placeClass=home
         if (filter.placeClass !== undefined) {
             filterObj.place.class = filter.placeClass;
 
             // Resolve the places classification into a PlacesString
-            filterObj.place.names.push(...arcClassificationPlaces.getClassification(filter.placeClass)); // Add the array of places to place.names
+            filterObj.place.names.push(...arcClassificationPlaces.getClassification(filter.placeClass));
         }
 
         // &place=Bakery or &place=Bakery,Café
         if (filter.place !== undefined) {
-            filterObj.place.names.push(...filter.place.split(','));
+            filterObj.place.names.push(...this.parseArrayOrSeparatedString(filter.place));
         }
 
         // &placeUnassigned=1
         if (filter.placeUnassigned !== undefined) {
             filterObj.place.unassigned = true;
         }
-        
+
         // &placeFromClass=home
         if (filter.placeFromClass !== undefined) {
             filterObj.place.from.class = filter.placeFromClass;
@@ -446,7 +418,7 @@ class timelineFilter {
 
         // &placeFrom=Bakery or &placeFrom=Bakery,Café
         if (filter.placeFrom !== undefined) {
-            filterObj.place.from.names.push(...filter.placeFrom.split(','));
+            filterObj.place.from.names.push(...this.parseArrayOrSeparatedString(filter.placeFrom));
         }
 
         // &placeToClass=home
@@ -459,9 +431,9 @@ class timelineFilter {
 
         // &placeTo=Bakery or &placeTo=Bakery,Café
         if (filter.placeTo !== undefined) {
-            filterObj.place.to.names.push(...filter.placeTo.split(','));
+            filterObj.place.to.names.push(...this.parseArrayOrSeparatedString(filter.placeTo));
         }
-        
+
 
         this.filterObj = filterObj;
         return filterObj;
@@ -471,7 +443,7 @@ class timelineFilter {
     // Returns at least an empty array if input is invalid
     private parseArrayOrSeparatedString(arrayOrSeparatedString: string | string[]): string[] {
         let returnArr: string[] = [];
-        if(arrayOrSeparatedString !== undefined) {
+        if (arrayOrSeparatedString !== undefined) {
             // Check if input value is already an array, in this case just hand over
             if (Array.isArray(arrayOrSeparatedString)) {
                 return arrayOrSeparatedString;
