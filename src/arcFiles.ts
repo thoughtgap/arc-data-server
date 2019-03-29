@@ -339,9 +339,11 @@ export class Layer2Directory extends directory {
             var Progress = require('ts-progress');
             var progress = Progress.create({ total: this.filenameList.length, pattern: 'Parsing arc timeline files: {bar} {current}/{total} | Remaining: {remaining} | Elapsed: {elapsed} ' });
             for (let i = 0; i < this.fileContentList.length; i++) {
-
+                var fileContent = this.fileContentList[i].fileContent;
                 // TODO: error handling
-                this.arcTimelines.push(new arcTimeline(this.fileContentList[i].fileContent));
+                if (fileContent) {
+                    this.arcTimelines.push(new arcTimeline(this.fileContentList[i].fileContent));
+                }
 
                 // After parsing the data, the file contents can be deleted to free up memory
                 this.fileContentList[i] = null;
@@ -376,14 +378,14 @@ export class Layer2Directory extends directory {
 // File
 export class File {
     fileFullPath: string
-    fileContent
+    fileContent: string
 
     constructor(fileFullPath: string, json: boolean) {
         this.fileFullPath = fileFullPath;
 
         //console.log(`Reading ${json ? 'JSON' : ''} file ${this.fileFullPath}`)
         let content = fs.readFileSync(this.fileFullPath, 'utf8');
-        if (json) {
+        if (json && content) {
             content = JSON.parse(content);
         }
         this.fileContent = content;
