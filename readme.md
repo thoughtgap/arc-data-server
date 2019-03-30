@@ -80,6 +80,8 @@ You can optionally filter the queried timelineItems with the following URL-Param
   * `placeToClass=work` A place classification, maintained in `config/classifications.json`
 * Field filters for `timelineItems/list`
   * `fields=startDate,duration` A (comma-separated) list of the desired fields. Possibilities are [listed in the wiki](https://github.com/thoughtgap/arc-data-server/wiki/Filterable-fields-for--timelineItems-list).
+  * Examples:
+    * Timeline items for 2019-03-01, with all possible fields: [`/timelineItems/list?from=2019-03-01&to=2019-03-01&fields=itemId,nextItemId,previousItemId,startDate,endDate,samples,radius,altitude,center,activityType,activeEnergyBurned,stepCount,isVisit,floorsAscended,floorsDescended,averageHeartRate,maxHeartRate,place,streetAddress,manualPlace,placeId,uncertainActivityType,manualActivityType,activityTypeConfidenceScore,duration,durationHuman,distanceToPlace,bearingToPlace`](http://localhost:3000/timelineItems/list?from=2019-03-01&to=2019-03-01&fields=itemId,nextItemId,previousItemId,startDate,endDate,samples,radius,altitude,center,activityType,activeEnergyBurned,stepCount,isVisit,floorsAscended,floorsDescended,averageHeartRate,maxHeartRate,place,streetAddress,manualPlace,placeId,uncertainActivityType,manualActivityType,activityTypeConfidenceScore,duration,durationHuman,distanceToPlace,bearingToPlace)
 
 ## Commands
 
