@@ -87,7 +87,7 @@ You can optionally filter the queried timelineItems with the following URL-Param
   * `offset=100` *(optional)* The number of items to skip.
   * `page=2` *(optional)* The desired page number, starting at 1. Can be used to avoid specifying the offset, which it will override. Will calculate `offset = limit * (page - 1)`.
   * Examples:
-    * Limit to 50 entries, return page 2 (entries indexed 51-100): [`/timelineItems/list?fields=itemId&limit=50&page=2`](http://localhost:3000/timelineItems/list?fields=itemId&limit=50&page=2) - same as [`/timelineItems/list?fields=itemId&limit=50&offset=50`](http://localhost:3000/timelineItems/list?fields=itemId&limit=50&offset=50)  
+    * Limit to 50 entries, return page 2 (entries 51-100): [`/timelineItems/list?fields=itemId&limit=50&page=2`](http://localhost:3000/timelineItems/list?fields=itemId&limit=50&page=2) - same as [`/timelineItems/list?fields=itemId&limit=50&offset=50`](http://localhost:3000/timelineItems/list?fields=itemId&limit=50&offset=50)  
 
 ## Commands
 
