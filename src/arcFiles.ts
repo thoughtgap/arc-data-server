@@ -94,7 +94,12 @@ export class directory {
 
         this.filenameList.forEach((filename, i_file) => {
             let file = new File(path.join(this.dirPath, filename), true);
-            returnVal.push(file);
+
+            // Only add files with content, skip empty files
+            if (file.fileContent) {
+                returnVal.push(file);
+            }
+
             progress.update();
         });
         progress.done();
@@ -183,8 +188,6 @@ export class Layer1Directory extends directory {
             // Check file extension
             let extension = fileName.replace(/^.*(\..*)$/, "$1");
 
-
-
             // TODO: Check if file exists with same date in target
             let overwrite = true;
 
@@ -201,13 +204,24 @@ export class Layer1Directory extends directory {
             if (overwrite) {
                 if (extension == ".gz") {
 
-                    let gunzip = zlib.createGunzip();
                     let rstream = fs.createReadStream(sourceFile);
-                    let wstream = fs.createWriteStream(targetFile);
-                    rstream.pipe(gunzip).pipe(wstream);
-                    // TODO: Error handling
 
-                    counter.extracted++;
+                    var decompressed = rstream.pipe(zlib.createGunzip());
+                    
+                    // Error event (async!)
+                    decompressed.on('error', function (err) {
+                        console.error(`${fileName} - Corrupt archive (skipped, won't appear in summary)`);
+                        //console.error(err);
+                        counter.skipped++;
+                    });
+
+                    // On successful decompression write to target file (async!)
+                    decompressed.on('finish', function() {
+                        let wstream = fs.createWriteStream(targetFile);
+                        decompressed.pipe(wstream);
+                        counter.extracted++;
+                    });
+
                 }
                 else if (extension == ".json") {
                     //console.log(`Copy ${sourceFile} to ${targetFile}`);
@@ -221,6 +235,8 @@ export class Layer1Directory extends directory {
             progress.update();
         });
         progress.done();
+        
+        // TODO: This is being returned before the decompressed.on('error' events are fired.
         console.log(`Copied ${counter.copied}, extracted ${counter.extracted} and skipped ${counter.skipped} files.`)
         return counter;
     }
@@ -333,7 +349,7 @@ export class Layer2Directory extends directory {
             console.log("Timelines were already parsed, content deleted. It doesn't make sense to parse again!");
         }
         else if (this.fileContentList.length == 0) {
-            console.log("Timelines cannot be parsed, no files have been read.");
+            console.log("Timelines cannot be parsed, no files have been read successfully.");
         }
         else {
             var Progress = require('ts-progress');
@@ -386,7 +402,13 @@ export class File {
         //console.log(`Reading ${json ? 'JSON' : ''} file ${this.fileFullPath}`)
         let content = fs.readFileSync(this.fileFullPath, 'utf8');
         if (json && content) {
-            content = JSON.parse(content);
+            // TODO: Error handling (file can be incomplete, JSON.parse might fail)
+            try {
+                content = JSON.parse(content);
+            } catch (e) {
+                console.error(`${fileFullPath} - Invalid JSON content`);
+                //console.error(e);
+            }
         }
         this.fileContent = content;
     }
