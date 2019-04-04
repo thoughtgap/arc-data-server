@@ -82,6 +82,12 @@ You can optionally filter the queried timelineItems with the following URL-Param
   * `fields=startDate,duration` A (comma-separated) list of the desired fields. Possibilities are [listed in the wiki](https://github.com/thoughtgap/arc-data-server/wiki/Filterable-fields-for--timelineItems-list).
   * Examples:
     * Timeline items for 2019-03-01, with all possible fields: [`/timelineItems/list?from=2019-03-01&to=2019-03-01&fields=itemId,nextItemId,previousItemId,startDate,endDate,samples,radius,altitude,center,activityType,activeEnergyBurned,stepCount,isVisit,floorsAscended,floorsDescended,averageHeartRate,maxHeartRate,place,streetAddress,manualPlace,placeId,uncertainActivityType,manualActivityType,activityTypeConfidenceScore,duration,durationHuman,distanceToPlace,bearingToPlace`](http://localhost:3000/timelineItems/list?from=2019-03-01&to=2019-03-01&fields=itemId,nextItemId,previousItemId,startDate,endDate,samples,radius,altitude,center,activityType,activeEnergyBurned,stepCount,isVisit,floorsAscended,floorsDescended,averageHeartRate,maxHeartRate,place,streetAddress,manualPlace,placeId,uncertainActivityType,manualActivityType,activityTypeConfidenceScore,duration,durationHuman,distanceToPlace,bearingToPlace)
+* Pagination for `timelineItems/list`
+  * `limit=50` Limit the number of returned timelineItems (Standard: no limit, thus no pagination)
+  * `offset=100` *(optional)* The number of items to skip.
+  * `page=2` *(optional)* The desired page number, starting at 1. Can be used to avoid specifying the offset, which it will override. Will calculate `offset = limit * (page - 1)`.
+  * Examples:
+    * Limit to 50 entries, return page 2 (entries indexed 51-100): [`/timelineItems/list?fields=itemId&limit=50&page=2`](http://localhost:3000/timelineItems/list?fields=itemId&limit=50&page=2) - same as [`/timelineItems/list?fields=itemId&limit=50&offset=50`](http://localhost:3000/timelineItems/list?fields=itemId&limit=50&offset=50)  
 
 ## Commands
 

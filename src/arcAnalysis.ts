@@ -62,7 +62,19 @@ export abstract class timelinesAnalysis {
 
         // For each timeline, execute listPlaces and then flatten the result
         let timelinesResults = timelines.map(timeline => singleTimelineAnalysis.listTimelineItems(timeline, tlFilter));
+        
         timelinesResults = flattenArray(timelinesResults);
+        
+        // Filter for pagination
+        // TODO: Performance could be increased by passing pagination to the single timelines,
+        //       so not all timelines have to be parsed all the time. Makes it more complicated though.
+        if(tlFilter.filterObj.pagination.limit) {
+            timelinesResults = timelinesResults.filter((timelinesResults, i_timelinesResults) => {
+                return (i_timelinesResults >= tlFilter.filterObj.pagination.offset
+                        && i_timelinesResults < tlFilter.filterObj.pagination.offset + tlFilter.filterObj.pagination.limit);
+            });
+        }
+        
         return timelinesResults;
     }
 }
@@ -161,6 +173,7 @@ export abstract class singleTimelineAnalysis {
 
         return this.itemFilter(timeline, timelineFilter)
             .map(timelineItem => {                             // Return only some fields
+
                 // Beautification for duration by applying another function
                 if (timelineFilter.filterObj.fields.includes("durationHuman")) {
                     let returnObj = timelineItem.getFields(timelineFilter.filterObj.fields);
@@ -304,7 +317,11 @@ interface filterObj {
             class?: string
         }
     },
-    fields?: string[]
+    fields?: string[],
+    pagination?: {
+        limit?: number,
+        offset?: number
+    }
 }
 
 class timelineFilter {
@@ -325,7 +342,20 @@ class timelineFilter {
         filterObj.type = this.parseArrayOrSeparatedString(filter.type) as filterType[];
 
 
-
+        // Pagination
+        filterObj.pagination = {
+            limit: null,
+            offset: 0
+        };
+        if (filter.limit && parseInt(filter.limit) != 0) {
+            filterObj.pagination.limit = parseInt(filter.limit);
+        }
+        if (filter.offset) {
+            filterObj.pagination.offset = parseInt(filter.offset);
+        }
+        if (filter.page && parseInt(filter.page) != 0) {
+            filterObj.pagination.offset = filterObj.pagination.limit * (parseInt(filter.page) - 1);
+        }
 
         // Weekday Filter
         filterObj.weekday = this.parseArrayOrSeparatedString(filter.weekday) as filterWeekdayStr[];
