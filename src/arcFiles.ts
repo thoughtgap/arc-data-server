@@ -3,6 +3,7 @@
 import fs = require('fs');
 import path = require('path');
 import zlib = require('zlib');
+import { promisify } from 'util';
 import { arcTimeline } from './arcjson';
 
 // Superclass for file directories
@@ -110,6 +111,19 @@ export class directory {
     }
 }
 
+// Methods for Layer1 => Layer2 file extraction
+enum ExtractionMethod {
+    SKIP = 1,
+    COPY,
+    EXTRACT,
+}
+
+// Interface for Layer1 => Layer2 extraction
+interface FileExtraction {
+    method:ExtractionMethod;
+    error?:Error;
+}
+
 // Layer 1: iCloud Drive Directory
 // not implemented yet!
 export class Layer1Directory extends directory {
@@ -136,10 +150,10 @@ export class Layer1Directory extends directory {
         this.nextLayerDirPath = nextLayerDirPath; // Needed for extraction        
     }
 
-    public load() {
+    public async load() {
         this.readFilenameList();
         let duplicateSummary = this.deduplicateFilenameList();
-        let extractSummary = this.extractFilesToLayer2();
+        let extractSummary = await this.extractFilesToLayer2();
 
         let summary = {
             "extract_timestamp": new Date(),
@@ -166,79 +180,243 @@ export class Layer1Directory extends directory {
     }
 
     // Link between Layer 1 and 2: extract files into layer2
-    extractFilesToLayer2() {
+    async extractFilesToLayer2() {
         let counter = { skipped: 0, extracted: 0, copied: 0 };
+        let mainErrors = [];
+        let fileErrors = [];
+        
+        try {
+            //TODO: Configuration checks should be done on app startup
+            await this.checkNextLayerDirectory();
 
-        // Check for layer 2 directory
-        if (!this.nextLayerDirPath) {
-            console.error("Cannot start extraction, nextLayerDirPath is missing!");
-            counter["error"] = "Cannot start extraction, nextLayerDirPath is missing!";
-            return counter
+            // Initialize progress bar
+            let Progress = require('ts-progress');
+            let progress = Progress.create({total: this.filenameList.length, pattern: 'Copying/Extracting arc timeline files from iCloud Directory: {bar} {current}/{total} | Remaining: {remaining} | Elapsed: {elapsed} '});
+
+            // Wait for each file to finish synchronously
+            for ( let fileName of this.filenameList ) {
+                let fileOperation = await this.extractFileToLayer2(fileName);
+                
+                // Update counter for extraction method used
+                if ( fileOperation.method === ExtractionMethod.SKIP ) {
+                    counter.skipped += 1;
+                }
+                else if ( fileOperation.method === ExtractionMethod.COPY ) {
+                    counter.copied += 1;
+                }
+                else if ( fileOperation.method === ExtractionMethod.EXTRACT ) {
+                    counter.extracted += 1;
+                }
+
+                // Log errors
+                if ( fileOperation.error ) {
+                    fileErrors.push({
+                        fileName: fileName,
+                        error: fileOperation.error
+                    });
+                }
+
+                progress.update();
+            }
+
+            progress.done();
+        }
+        catch (err) {
+            mainErrors.push(err);
         }
 
-        let Progress = require('ts-progress');
-        let progress = Progress.create({ total: this.filenameList.length, pattern: 'Copying/Extracting arc timeline files from iCloud Directory: {bar} {current}/{total} | Remaining: {remaining} | Elapsed: {elapsed} ' });
-
-        this.filenameList.forEach(fileName => {
-
-            let sourceFile = path.join(this.dirPath, fileName);
-            // get cleaned.up target filename (only YYYY-MM-DD.json)
-            let targetFile = path.join(this.nextLayerDirPath, this.cleanFileName(fileName) + ".json");
-
-            // Check file extension
-            let extension = fileName.replace(/^.*(\..*)$/, "$1");
-
-            // TODO: Check if file exists with same date in target
-            let overwrite = true;
-
-            if (fs.existsSync(targetFile)) {
-                let sourceFileDate = new Date(fs.statSync(sourceFile).mtime);
-                let targetFileDate = new Date(fs.statSync(targetFile).mtime);
-
-                if (targetFileDate >= sourceFileDate) {
-                    overwrite = false;
-                    counter.skipped++;
-                }
-            }
-
-            if (overwrite) {
-                if (extension == ".gz") {
-
-                    let rstream = fs.createReadStream(sourceFile);
-
-                    var decompressed = rstream.pipe(zlib.createGunzip());
-                    
-                    // Error event (async!)
-                    decompressed.on('error', function (err) {
-                        console.error(`${fileName} - Corrupt archive (skipped, won't appear in summary)`);
-                        //console.error(err);
-                        counter.skipped++;
-                    });
-
-                    // On successful decompression write to target file (async!)
-                    decompressed.on('finish', function() {
-                        let wstream = fs.createWriteStream(targetFile);
-                        decompressed.pipe(wstream);
-                        counter.extracted++;
-                    });
-
-                }
-                else if (extension == ".json") {
-                    //console.log(`Copy ${sourceFile} to ${targetFile}`);
-                    fs.copyFile(sourceFile, targetFile, (err) => {
-                        if (err) throw err;
-                    });
-
-                    counter.copied++;
-                }
-            }
-            progress.update();
-        });
-        progress.done();
         
-        // TODO: This is being returned before the decompressed.on('error' events are fired.
-        console.log(`Copied ${counter.copied}, extracted ${counter.extracted} and skipped ${counter.skipped} files.`)
+        // Show errors in console
+        if ( mainErrors.length > 0 ) {
+            console.error('Failed extraction:');
+            for ( let e of mainErrors ) {
+                console.error(e);
+            }
+        }
+        if ( fileErrors.length > 0 ) {
+            console.error('Encoutered errors while processing the following files:');
+            for ( let e of fileErrors ) {
+                console.error(`${e.fileName} - ${e.error.message}`);
+            }
+        }
+
+        console.log(`Copied ${counter.copied}, extracted ${counter.extracted} and skipped ${counter.skipped} files.`);
+
         return counter;
+    }
+
+    /**
+     * Extracts a single file from Layer 1 to Layer 2. File is either copied, extracted or skipped
+     *
+     * @private
+     * @param {string} fileName
+     * @returns {Promise<FileExtraction>} Resolves when process is done. Returns file operation performed and error code if available
+     * @memberof Layer1Directory
+     */
+    private extractFileToLayer2(fileName:string):Promise<FileExtraction> {
+        return new Promise(async (res) => {
+            let fileOperation:FileExtraction = {
+                method: ExtractionMethod.SKIP
+            };
+
+            try {
+                let sourceFile = path.join(this.dirPath, fileName);
+                // get cleaned.up target filename (only YYYY-MM-DD.json)
+                let targetFile = path.join(this.nextLayerDirPath, this.cleanFileName(fileName) + ".json");
+
+                // Try to compare file dates
+                try {
+                    if ( await this.targetIsNewer(sourceFile, targetFile) ) {
+                        // Resolve SKIP when target is newer
+                        res(fileOperation)
+                    }
+                }
+                catch(errorOnDateComparison) {
+                    // Ignore error since target file may not exist yet
+                }
+                
+                // Check for archive or json to extract or copy
+                let extension = fileName.replace(/^.*(\..*)$/, "$1");
+
+                if ( extension === '.json' ) {
+                    await this.extractFromSource(ExtractionMethod.COPY, sourceFile, targetFile);
+                    fileOperation.method = ExtractionMethod.COPY;
+                    res(fileOperation);
+                }
+                else if ( extension === '.gz' ) {
+                    await this.extractFromSource(ExtractionMethod.EXTRACT, sourceFile, targetFile);
+                    fileOperation.method = ExtractionMethod.EXTRACT;
+                    res(fileOperation);
+                }
+            }
+            catch(err) {
+                // Error on copy/extraction
+                fileOperation.method = ExtractionMethod.SKIP;
+                fileOperation.error = err;
+                res(fileOperation);
+            }
+        });
+    }
+
+    /**
+     * Checks for the correct configuration of the Layer 2 directory
+     *
+     * @private
+     * @returns {Promise<void>} Promise resolves when configuration is set correctly
+     * @memberof Layer1Directory
+     */
+    private checkNextLayerDirectory():Promise<void> {
+        return new Promise((res, rej) => {
+            //TODO: Check if it is a directory and if there is write access
+            if ( !this.nextLayerDirPath ) {
+                rej(new Error('nextLayerDirPath is missing!'));
+            }
+            res();
+        });
+    }
+
+    /**
+     * Checks if the provided target file is newer than the provided source file
+     *
+     * @private
+     * @param {string} sourceFile path to source file
+     * @param {string} targetFile path to target file
+     * @returns {Promise<boolean>} the target is newer than the source
+     * @memberof Layer1Directory
+     */
+    private targetIsNewer(sourceFile:string, targetFile:string):Promise<boolean> {
+        return new Promise(async (res, rej) => {
+            try {
+                let sourceFileDate = new Date((await promisify(fs.stat)(sourceFile)).mtime);
+                let targetFileDate = new Date((await promisify(fs.stat)(targetFile)).mtime);
+
+                res(targetFileDate >= sourceFileDate);
+            }
+            catch(err) {
+                rej(err);
+            }
+        });
+    }
+
+    /**
+    * Attempts to copy or extract .gz/.json source file to a .json target file
+    *
+    * @private
+    * @param {ExtractionMethod} method ExtractionMethod.EXTRACT for .gz extraction or ExtractionMethod.COPY for file copy
+    * @param {string} sourceFile source file path
+    * @param {string} targetFile target file path
+    * @returns {Promise<void>} Promise resolves when extraction was successful
+    * @memberof Layer1Directory
+    */
+    private extractFromSource(method:ExtractionMethod, sourceFile:string, targetFile:string):Promise<void> {
+        return new Promise((res, rej) => {
+            if ( method === ExtractionMethod.COPY ) {
+               fs.copyFile(sourceFile, targetFile, (err) => {
+                   if (err) rej(err);
+                   res();
+               });
+            }
+            else if ( method === ExtractionMethod.EXTRACT ) {
+                let rstream = fs.createReadStream(sourceFile);
+                let gunzip = zlib.createGunzip();
+
+                gunzip.on('error', rej);
+
+                let buffer = [];
+                gunzip.on('data', (chunk) => {
+                    buffer.push(chunk);
+                });
+
+                gunzip.on('end', (chunk) => {
+                    let wstream = fs.createWriteStream(targetFile);
+                    wstream.on('error', rej);
+                    wstream.on('finish', res);
+                    wstream.on('end', res);
+                    for ( let b of buffer ) {
+                        wstream.write(b);
+                    }
+                    wstream.end();
+                });
+
+                rstream.pipe(gunzip);
+
+                /*
+                    // TODO: Piping gunzip causes errors
+
+                    // The following code would be cleaner since the file
+                    // would not be read into a variable but piped directly to targetFile.
+                    // However, it causes some errors
+                    
+                    let rstream = fs.createReadStream(sourceFile);
+                    let gunzip = zlib.createGunzip();
+                    let wstream = fs.createWriteStream(targetFile);
+                    rstream.pipe(gunzip).pipe(wstream);
+
+                    // For some files, the gunzip finish event is not fired.
+                    // Some files cause the following gunzip errors:
+
+                    // 2018-05-12.json.gz - incorrect data check
+                    // 2018-07-18.json.gz - invalid block type
+                    // 2018-07-20.json.gz - invalid block type
+                    // 2018-07-21.json.gz - invalid distance code
+                    // 2018-07-23.json.gz - invalid block type
+                    // 2018-07-26.json.gz - too many length or distance symbols
+                    // 2018-07-27.json.gz - invalid block type
+                    // 2018-07-28.json.gz - invalid distance code
+                    // 2018-07-29.json.gz - invalid block type
+                    // 2018-07-30.json.gz - invalid block type
+                    // 2018-08-01.json.gz - invalid code lengths set
+                    // 2018-08-03.json.gz - invalid block type
+                    // 2018-08-04.json.gz - invalid stored block lengths
+                    // 2018-08-07.json.gz - invalid block type
+                    // 2018-08-08.json.gz - invalid block type
+                    // 2018-08-10.json.gz - too many length or distance symbols
+                */
+            }
+            else {
+                rej(new Error('Method not allowed'));
+            }
+        });
     }
 
     // Cleans up a filename and removes extensions and duplicate indicators
@@ -441,8 +619,10 @@ export class config {
         console.log(`Reading JSON file ${fileFullPath}`)
         let config = JSON.parse(fs.readFileSync(fileFullPath, 'utf8'));
 
-        this.arcLayer1Dir = config.layer1.directory; // TODO: Check if this directory really exists
-        this.arcLayer2Dir = config.layer2.directory; // TODO: Check if this directory really exists too
+        this.arcLayer1Dir = config.layer1.directory; 
+        this.arcLayer2Dir = config.layer2.directory;
+        // TODO: Check if directories really exist (and are directories)
+        // TODO: Check for write access in layer2 directory
         this.arcLayer2AutoLoadOnStart = config.layer2.autoLoadOnStart;
         this.configLoaded = true;
         return true;
