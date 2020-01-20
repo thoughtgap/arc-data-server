@@ -6,6 +6,18 @@ import zlib = require('zlib');
 import { promisify } from 'util';
 import { arcTimeline } from './arcjson';
 
+
+function traverseDir(dir) {
+    return fs.readdirSync(dir).reduce((files, file) => {
+        let fullPath = path.join(dir, file);
+        if (fs.lstatSync(fullPath).isDirectory()) {
+            const nestedFiles = traverseDir(fullPath);
+            return [...files, ...nestedFiles];
+        }
+        return [...files, fullPath];
+    }, []);
+}
+
 // Superclass for file directories
 export class directory {
     layerNo: number
@@ -72,10 +84,10 @@ export class directory {
             return false;
         }
         // Read files of directory
-        let files: string[] = fs.readdirSync(this.dirPath);
+        let files: string[] = traverseDir(this.dirPath);
 
         // Filter for all files with yyyy-mm-dd.json filename format (others are dupes)
-        this.filenameList = files.filter(file => RegExp(this.fileNamePattern).test(file));
+        this.filenameList = files.filter(file => RegExp(this.fileNamePattern).test(path.basename(file)));
 
         this.loadedFilenameList = true;
         console.log(`${this.dirPath}/readFilenameList() Found ${this.filenameList.length} files`);
@@ -94,7 +106,7 @@ export class directory {
         var progress = Progress.create({ total: this.filenameList.length, pattern: 'Reading files from directory: {bar} {current}/{total} | Remaining: {remaining} | Elapsed: {elapsed} ' });
 
         this.filenameList.forEach((filename, i_file) => {
-            let file = new File(path.join(this.dirPath, filename), true);
+            let file = new File(filename, true);
 
             // Only add files with content, skip empty files
             if (file.fileContent) {
@@ -260,7 +272,7 @@ export class Layer1Directory extends directory {
             };
 
             try {
-                let sourceFile = path.join(this.dirPath, fileName);
+                let sourceFile = fileName;
                 // get cleaned.up target filename (only YYYY-MM-DD.json)
                 let targetFile = path.join(this.nextLayerDirPath, this.cleanFileName(fileName) + ".json");
 
@@ -423,7 +435,8 @@ export class Layer1Directory extends directory {
     // e.g. 2015-08-02.json.gz      => 2015-08-02
     //      2019-02-22 1915.json.gz => 2019-02-22
     //      2019-02-22.json(12).gz  => 2019-02-22
-    private cleanFileName(fileName: string) {
+    private cleanFileName(filePath: string) {
+        const fileName = path.basename(filePath);
         return fileName.replace(/( [0-9]+)?\.json(\([0-9]+\))?(\.gz)?$/, "");
     }
 
@@ -466,8 +479,8 @@ export class Layer1Directory extends directory {
     // Find the most recent file from a list of files contained within the layer directory
     private youngestFileFromList(fileList: string[]): string {
         let youngestFile = fileList.reduce((last, current) => {
-            let currentFileDate = new Date(fs.statSync(path.join(this.dirPath, current)).mtime);
-            let lastFileDate = new Date(fs.statSync(path.join(this.dirPath + last)).mtime);
+            let currentFileDate = new Date(fs.statSync(current).mtime);
+            let lastFileDate = new Date(fs.statSync(last).mtime);
             return (currentFileDate.getTime() > lastFileDate.getTime()) ? current : last;
         });
         //console.log("youngestFileFromList", fileList, youngestFile);
